@@ -70,29 +70,30 @@ app.post("/register", (req, res) => {
 });
 
 // Route: Login
-app.post("/login", (req, res) => {
-    const { email, password } = req.body;
+app.post("/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
+        if (!email || !password) {
+            return res.status(400).json({ error: "Email and password are required" });
+        }
+
+        const query = `SELECT * FROM users WHERE email = ?`;
+        db.get(query, [email], (err, user) => {
+            if (err || !user) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
+
+            if (!bcrypt.compareSync(password, user.password)) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
+
+            const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+            res.json({ token, userId: user.id, role: user.role });
+        });
+    } catch (error) {
+        res.status(500).json({ error: `Login failed: ${error.message}` });
     }
-
-    const query = `SELECT * FROM users WHERE email = ?`;
-    db.get(query, [email], (err, user) => {
-        if (err || !user) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        if (!bcrypt.compareSync(password, user.password)) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        const token = jwt.sign(
-            { id: user.id, role: user.role }, // Include rolul utilizatorului în token
-            process.env.JWT_SECRET,
-            { expiresIn: "1h" }
-        );
-    });
 });
 
 // Route: Save Route
