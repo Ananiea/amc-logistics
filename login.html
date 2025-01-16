@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AMC Logistics - Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body {
+            background-color: #e0f7f9;
+            color: #005f6a;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #b2ebf2;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+        .login-container h1 {
+            color: #00796b;
+            text-align: center;
+        }
+        button {
+            background-color: #00796b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <main class="container login-container">
+        <h1>AMC Logistics</h1>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <label for="userId">ID:</label>
+            <input type="text" id="userId" name="userId" placeholder="Geben Sie Ihre ID ein" required>
+            
+            <label for="password">Passwort:</label>
+            <input type="password" id="password" name="password" placeholder="Geben Sie Ihr Passwort ein" required>
+            
+            <button type="submit">Anmelden</button>
+        </form>
+        <p id="errorMsg" style="color: red; display: none;">Bitte geben Sie alle Felder korrekt ein.</p>
+    </main>
+
+    <script>
+        function handleLogin(event) {
+            event.preventDefault();
+            const userId = document.getElementById("userId").value.trim();
+            const password = document.getElementById("password").value.trim();
+            
+            if (userId === "" || password === "") {
+                document.getElementById("errorMsg").style.display = "block";
+            } else {
+                // Redirect to dashboard after validation
+                document.getElementById("errorMsg").style.display = "none";
+                window.location.href = "dashboard.html"; // Înlocuiește cu logica backend
+            }
+        }
+    </script>
+</body>
+</html>

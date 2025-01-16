@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AMC Logistics - Tägliche Route</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body {
+            background-color: #e0f7f9;
+            color: #005f6a;
+        }
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid #b2ebf2;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #00796b;
+            color: white;
+        }
+        .message {
+            display: none;
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            display: none;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Tägliche Route eingeben</h1>
+        <form id="routeForm" onsubmit="handleSubmit(event)">
+            <!-- Automatische Felder -->
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="Max Mustermann" readonly>
+            
+            <label for="id">ID:</label>
+            <input type="text" id="id" name="id" value="12345" readonly>
+            
+            <label for="date">Datum:</label>
+            <input type="date" id="date" name="date" required>
+            
+            <!-- Bearbeitbare Felder -->
+            <label for="auto">Auto:</label>
+            <input type="text" id="auto" name="auto" placeholder="Kennzeichen eingeben" pattern="^[a-zA-Z0-9-]+$" required>
+            
+            <label for="tour">Tour:</label>
+            <input type="number" id="tour" name="tour" min="1" max="4" placeholder="Tournummer" required>
+            
+            <label for="kunde">Kunde:</label>
+            <input type="number" id="kunde" name="kunde" placeholder="Kundennummer" required>
+            
+            <label for="start">Startzeit:</label>
+            <input type="time" id="start" name="start" required>
+            
+            <label for="ende">Endzeit:</label>
+            <input type="time" id="ende" name="ende" required>
+            
+            <label for="totalTour">Gesamttour (monatlich):</label>
+            <input type="number" id="totalTour" name="totalTour" value="150" readonly>
+            
+            <button type="submit">Speichern</button>
+            <p class="message" id="successMessage">Route wurde erfolgreich gespeichert!</p>
+            <p class="error" id="errorMessage">Bitte füllen Sie alle Felder korrekt aus.</p>
+        </form>
+    </main>
+
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            const form = document.getElementById("routeForm");
+            const isValid = form.checkValidity();
+
+            if (isValid) {
+                document.getElementById("successMessage").style.display = "block";
+                document.getElementById("errorMessage").style.display = "none";
+                // Hier kommt die Logik zur Speicherung in der Datenbank
+            } else {
+                document.getElementById("successMessage").style.display = "none";
+                document.getElementById("errorMessage").style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>

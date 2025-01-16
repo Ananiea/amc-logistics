@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AMC Logistics - Plan</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body {
+            background-color: #e0f7f9;
+            color: #005f6a;
+        }
+        .plan-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .plan-item {
+            padding: 10px;
+            border: 1px solid #b2ebf2;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+        .plan-item a {
+            color: #00796b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .plan-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Plan</h1>
+        <p>Wählen Sie einen Plan aus und klicken Sie, um ihn herunterzuladen:</p>
+        <div class="plan-list">
+            <!-- Linkuri pentru planuri -->
+            <div class="plan-item">
+                <a href="plan_januar.png" download="Plan_Januar">Plan für Januar herunterladen</a>
+            </div>
+            <div class="plan-item">
+                <a href="plan_februar.png" download="Plan_Februar">Plan für Februar herunterladen</a>
+            </div>
+            <div class="plan-item">
+                <a href="plan_maerz.png" download="Plan_März">Plan für März herunterladen</a>
+            </div>
+            <!-- Adaugă mai multe planuri după necesități -->
+        </div>
+    </main>
+</body>
+</html>
