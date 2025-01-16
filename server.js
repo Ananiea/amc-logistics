@@ -59,7 +59,11 @@ app.post("/login", (req, res) => {
 
     const query = `SELECT * FROM users WHERE id = ?`;
     db.get(query, [userId], (err, user) => {
-        if (err || !user) {
+        if (err) {
+            return res.status(500).json({ error: `Database error: ${err.message}` });
+        }
+
+        if (!user) {
             return res.status(401).json({ error: "Ungültige Anmeldeinformationen (Informații de autentificare invalide)" });
         }
 
@@ -68,7 +72,12 @@ app.post("/login", (req, res) => {
         }
 
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-        res.json({ token, userId: user.id, role: user.role, name: user.name });
+        res.json({ 
+            token, 
+            userId: user.id, 
+            role: user.role, 
+            name: user.name 
+        });
     });
 });
 
