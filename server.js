@@ -37,49 +37,39 @@ function adminOnly(req, res, next) {
     }
 }
 
-// Servirea fișierelor HTML pentru pagini
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "login.html"));
-});
+// Rute GET pentru pagini HTML
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/admin-create-user", (req, res) => res.sendFile(path.join(__dirname, "public", "admin-create-user.html")));
+app.get("/info", (req, res) => res.sendFile(path.join(__dirname, "public", "info.html")));
+app.get("/introducere-ruta", (req, res) => res.sendFile(path.join(__dirname, "public", "introducere-ruta.html")));
+app.get("/istoric-rute", (req, res) => res.sendFile(path.join(__dirname, "public", "istoric-rute.html")));
+app.get("/mediu-invatare", (req, res) => res.sendFile(path.join(__dirname, "public", "mediu-invatare.html")));
+app.get("/plan", (req, res) => res.sendFile(path.join(__dirname, "public", "plan.html")));
+app.get("/profile", (req, res) => res.sendFile(path.join(__dirname, "public", "profile.html")));
+app.get("/schimba-parola", (req, res) => res.sendFile(path.join(__dirname, "public", "schimba-parola.html")));
 
-app.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "login.html"));
-});
+// Endpoint pentru login (cu ID și parola)
+app.post("/login", (req, res) => {
+    const { userId, password } = req.body;
 
-app.get("/dashboard", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
+    if (!userId || !password) {
+        return res.status(400).json({ error: "ID und Passwort erforderlich (ID și parola sunt necesare)" });
+    }
 
-app.get("/admin-create-user", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "admin-create-user.html"));
-});
+    const query = `SELECT * FROM users WHERE id = ?`;
+    db.get(query, [userId], (err, user) => {
+        if (err || !user) {
+            return res.status(401).json({ error: "Ungültige Anmeldeinformationen (Informații de autentificare invalide)" });
+        }
 
-app.get("/info", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "info.html"));
-});
+        if (!bcrypt.compareSync(password, user.password)) {
+            return res.status(401).json({ error: "Ungültige Anmeldeinformationen (Informații de autentificare invalide)" });
+        }
 
-app.get("/introducere-ruta", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "introducere-ruta.html"));
-});
-
-app.get("/istoric-rute", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "istoric-rute.html"));
-});
-
-app.get("/mediu-invatare", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "mediu-invatare.html"));
-});
-
-app.get("/plan", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "plan.html"));
-});
-
-app.get("/profile", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "profile.html"));
-});
-
-app.get("/schimba-parola", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "schimba-parola.html"));
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        res.json({ token, userId: user.id, role: user.role, name: user.name });
+    });
 });
 
 // Endpoint pentru încărcarea unui fișier CSV
@@ -93,10 +83,7 @@ app.post("/admin/bulk-upload", adminOnly, upload.single("file"), async (req, res
     const filePath = path.join(__dirname, file.path);
     const fileStream = fs.createReadStream(filePath);
 
-    const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity,
-    });
+    const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
 
     let successCount = 0;
     let errorCount = 0;
@@ -111,8 +98,8 @@ app.post("/admin/bulk-upload", adminOnly, upload.single("file"), async (req, res
         }
 
         const hashedPassword = bcrypt.hashSync(password.trim(), 10);
-
         const query = `INSERT INTO users (id, name, email, phone, password, role) VALUES (?, ?, ?, ?, ?, 'courier')`;
+
         db.run(query, [id.trim(), name.trim(), email.trim(), phone.trim(), hashedPassword], (err) => {
             if (err) {
                 errors.push(`Error adding user ${id.trim()}: ${err.message}`);
@@ -124,17 +111,12 @@ app.post("/admin/bulk-upload", adminOnly, upload.single("file"), async (req, res
     }
 
     rl.on("close", () => {
-        fs.unlinkSync(filePath); // Șterge fișierul încărcat după procesare
-        res.json({
-            message: "Upload completed",
-            successCount,
-            errorCount,
-            errors,
-        });
+        fs.unlinkSync(filePath);
+        res.json({ message: "Upload completed", successCount, errorCount, errors });
     });
 });
 
-// Pornire server
+// Pornirea serverului
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
