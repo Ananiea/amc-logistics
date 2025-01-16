@@ -1,35 +1,39 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Informații</title>
+    <title>Informationen</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
-        <h1>Informații</h1>
-        <div id="infoContent"></div>
+        <h1>Informationen (Informații)</h1>
+        <section>
+            <h2>Lagerstandort (Locația depozitului)</h2>
+            <p>
+                <a href="https://www.google.com/maps?q=Zeppelinstraße+10,+85748+Garching+bei+München" target="_blank">
+                    Zeppelinstraße 10, 85748 Garching bei München
+                </a>
+            </p>
+            <h2>Teamleiter (Team-leaderi)</h2>
+            <ul>
+                <li>
+                    Ana-Maria - 
+                    <a href="tel:+4915730018679">+49 1573 0018679</a>
+                </li>
+                <li>
+                    Ciprian - 
+                    <a href="tel:+4915510211975">+49 1551 0211975</a>
+                </li>
+            </ul>
+            <h2>Portal</h2>
+            <p>
+                <a href="https://couriers-portal.knuspr.de" target="_blank">
+                    Knuspr Kurier-Portal
+                </a>
+            </p>
+        </section>
     </main>
-    <script>
-        async function fetchInfo() {
-            try {
-                const response = await fetch("/info", {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    const infoContent = document.getElementById("infoContent");
-                    infoContent.innerHTML = `<p>${data.content}</p>`;
-                } else {
-                    alert("Eroare la încărcarea informațiilor.");
-                }
-            } catch (error) {
-                console.error("Eroare la încărcarea informațiilor:", error);
-            }
-        }
-        fetchInfo();
-    </script>
 </body>
 </html>

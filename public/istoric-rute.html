@@ -1,57 +1,77 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Istoric Rute</title>
+    <title>Routenhistorie (Istoric rute)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
-        <h1>Istoric Rute</h1>
+        <h1>Routenhistorie (Istoric rute)</h1>
+        <label for="month">Monat wählen (Selectează luna):</label>
+        <select id="month" name="month">
+            <option value="1">Januar (Ianuarie)</option>
+            <option value="2">Februar (Februarie)</option>
+            <option value="3">März (Martie)</option>
+            <option value="4">April</option>
+            <option value="5">Mai</option>
+            <option value="6">Juni</option>
+            <option value="7">Juli</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+            <option value="12">Dezember</option>
+        </select>
+        <button onclick="fetchRoutes()">Anzeigen (Afișează)</button>
         <table id="routesTable">
             <thead>
                 <tr>
-                    <th>Data</th>
+                    <th>Datum (Data)</th>
                     <th>Auto</th>
                     <th>Tour</th>
-                    <th>Kunde</th>
-                    <th>Start</th>
-                    <th>End</th>
+                    <th>Kunde (Clienți)</th>
+                    <th>Startzeit (Ora început)</th>
+                    <th>Endzeit (Ora sfârșit)</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+            </tbody>
         </table>
+        <p id="errorMessage" style="color:red;"></p>
     </main>
     <script>
         async function fetchRoutes() {
-            try {
-                const response = await fetch(`/route/${localStorage.getItem("userId")}/currentMonth`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    const tableBody = document.querySelector("#routesTable tbody");
-                    data.forEach((route) => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${route.date}</td>
-                            <td>${route.auto}</td>
-                            <td>${route.tour}</td>
-                            <td>${route.kunde}</td>
-                            <td>${route.start}</td>
-                            <td>${route.ende}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                } else {
-                    alert("Eroare la încărcarea istoricului.");
+            const month = document.getElementById("month").value;
+            const userId = localStorage.getItem("userId");
+            const year = new Date().getFullYear();
+            const response = await fetch(`/route/${userId}/${month}`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
-            } catch (error) {
-                console.error("Eroare la încărcarea rutelor:", error);
+            });
+            const data = await response.json();
+            if (response.ok) {
+                const tableBody = document.getElementById("routesTable").querySelector("tbody");
+                tableBody.innerHTML = "";
+                data.forEach(route => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${route.date}</td>
+                        <td>${route.auto}</td>
+                        <td>${route.tour}</td>
+                        <td>${route.kunde}</td>
+                        <td>${route.start}</td>
+                        <td>${route.ende}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                document.getElementById("errorMessage").innerText = "Fehler beim Abrufen der Daten (Eroare la încărcare)";
             }
         }
-        fetchRoutes();
     </script>
 </body>
 </html>

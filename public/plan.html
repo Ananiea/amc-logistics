@@ -1,39 +1,37 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Plan Zilnic</title>
+    <title>Täglicher Plan (Plan zilnic)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
-        <h1>Plan Zilnic</h1>
-        <ul id="planLinks"></ul>
+        <h1>Täglicher Plan (Plan zilnic)</h1>
+        <ul id="plans">
+            <!-- Planurile vor fi afișate aici -->
+        </ul>
     </main>
     <script>
-        async function fetchPlanLinks() {
-            try {
-                const response = await fetch("/plan", {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    const list = document.getElementById("planLinks");
-                    data.forEach((plan) => {
-                        const listItem = document.createElement("li");
-                        listItem.innerHTML = `<a href="${plan.url}" target="_blank">${plan.title}</a>`;
-                        list.appendChild(listItem);
-                    });
-                } else {
-                    alert("Eroare la încărcarea planului zilnic.");
+        document.addEventListener("DOMContentLoaded", async () => {
+            const response = await fetch("/plans", {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
-            } catch (error) {
-                console.error("Eroare la încărcarea planului zilnic:", error);
+            });
+            const data = await response.json();
+            if (response.ok) {
+                const plansList = document.getElementById("plans");
+                data.forEach(plan => {
+                    plansList.innerHTML += `
+                        <li>
+                            <a href="${plan.link}" download>${plan.title}</a>
+                        </li>
+                    `;
+                });
             }
-        }
-        fetchPlanLinks();
+        });
     </script>
 </body>
 </html>

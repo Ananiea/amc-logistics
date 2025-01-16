@@ -1,33 +1,65 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard</title>
+    <title>Dashboard - AM Logistics</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #00FFFF;
+            color: #000;
+        }
+        main {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            padding: 2rem;
+        }
+        button {
+            background-color: #fff;
+            color: #000;
+            font-size: 1rem;
+            padding: 1rem;
+            border: 2px solid #000;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #000;
+            color: #00FFFF;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
-        <h1>Dashboard - AMC Logistics</h1>
-        <nav>
-            <ul>
-                <li><a href="/introducere-ruta">Introducere Rută Zilnică</a></li>
-                <li><a href="/istoric-rute">Istoric Rute</a></li>
-                <li><a href="/profile">Profil Curier</a></li>
-                <li><a href="/mediu-invatare">Mediu de Învățare</a></li>
-                <li><a href="/plan">Plan Zilnic</a></li>
-                <li><a href="/schimba-parola">Schimbă Parola</a></li>
-                <li><a href="/info">Informații</a></li>
-                <li><button id="logoutButton">Deconectare</button></li>
-            </ul>
-        </nav>
+        <h1>Dashboard - AM Logistics</h1>
+        <button onclick="location.href='/introducere-ruta'">Tägliche Route einfügen (Introducere rută zilnică)</button>
+        <button onclick="location.href='/istoric-rute'">Routenhistorie (Istoric rute)</button>
+        <button onclick="location.href='/profile'">Profil (Profil curier)</button>
+        <button onclick="location.href='/mediu-invatare'">Lernumgebung (Mediu de învățare)</button>
+        <button onclick="location.href='/plan'">Täglicher Plan (Plan zilnic)</button>
+        <button onclick="location.href='/schimba-parola'">Passwort ändern (Schimbă parola)</button>
+        <button onclick="location.href='/info'">Informationen (Informații)</button>
+        <button id="adminButton" style="display:none;" onclick="location.href='/admin-create-user'">Benutzer hinzufügen (Adaugă utilizator)</button>
+        <button onclick="logout()">Abmelden (Deconectare)</button>
     </main>
     <script>
-        document.getElementById("logoutButton").addEventListener("click", () => {
+        document.addEventListener("DOMContentLoaded", () => {
+            const role = localStorage.getItem("role");
+            if (role === "admin") {
+                document.getElementById("adminButton").style.display = "block";
+            }
+        });
+
+        function logout() {
             localStorage.removeItem("token");
             localStorage.removeItem("role");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("name");
             window.location.href = "/login";
-        });
+        }
     </script>
 </body>
 </html>

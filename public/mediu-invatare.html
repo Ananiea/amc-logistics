@@ -1,39 +1,123 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mediu de Învățare</title>
+    <title>Lernumgebung (Mediu de învățare)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
-        <h1>Mediu de Învățare</h1>
-        <ul id="learningLinks"></ul>
+        <h1>Lernumgebung (Mediu de învățare)</h1>
+        <div id="resources">
+            <!-- Conținutul adăugat de admin va apărea aici -->
+        </div>
+        <div id="adminPanel" style="display: none;">
+            <h2>Admin-Bereich (Zona admin)</h2>
+            <form id="addVideoForm">
+                <label for="videoLink">YouTube-Link hinzufügen (Adaugă link YouTube):</label>
+                <input type="url" id="videoLink" name="videoLink" placeholder="https://www.youtube.com/watch?v=..." required>
+                <button type="submit">Hinzufügen (Adaugă)</button>
+            </form>
+            <form id="uploadFileForm" enctype="multipart/form-data">
+                <label for="fileUpload">Datei hochladen (Încărcați un fișier):</label>
+                <input type="file" id="fileUpload" name="file" accept=".pdf,image/*" required>
+                <button type="submit">Hochladen (Încărcare)</button>
+            </form>
+        </div>
+        <p id="successMessage" style="color:green;"></p>
+        <p id="errorMessage" style="color:red;"></p>
     </main>
     <script>
-        async function fetchLearningLinks() {
+        document.addEventListener("DOMContentLoaded", async () => {
+            const role = localStorage.getItem("role");
+            if (role === "admin") {
+                document.getElementById("adminPanel").style.display = "block";
+            }
+            await loadResources();
+
+            document.getElementById("addVideoForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const videoLink = document.getElementById("videoLink").value;
+                try {
+                    const response = await fetch("/admin/add-video", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("token")}`
+                        },
+                        body: JSON.stringify({ videoLink })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        document.getElementById("successMessage").innerText = "Video hinzugefügt! (Videoclip adăugat!)";
+                        await loadResources();
+                    } else {
+                        document.getElementById("errorMessage").innerText = data.error;
+                    }
+                } catch (error) {
+                    document.getElementById("errorMessage").innerText = "Fehler beim Hinzufügen (Eroare la adăugare)";
+                }
+            });
+
+            document.getElementById("uploadFileForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append("file", document.getElementById("fileUpload").files[0]);
+                try {
+                    const response = await fetch("/admin/upload-file", {
+                        method: "POST",
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`
+                        },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        document.getElementById("successMessage").innerText = "Datei hochgeladen! (Fișier încărcat!)";
+                        await loadResources();
+                    } else {
+                        document.getElementById("errorMessage").innerText = data.error;
+                    }
+                } catch (error) {
+                    document.getElementById("errorMessage").innerText = "Fehler beim Hochladen (Eroare la încărcare)";
+                }
+            });
+        });
+
+        async function loadResources() {
             try {
-                const response = await fetch("/learning", {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                const response = await fetch("/resources", {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    }
                 });
                 const data = await response.json();
-
                 if (response.ok) {
-                    const list = document.getElementById("learningLinks");
-                    data.forEach((link) => {
-                        const listItem = document.createElement("li");
-                        listItem.innerHTML = `<a href="${link.url}" target="_blank">${link.title}</a>`;
-                        list.appendChild(listItem);
+                    const resourcesDiv = document.getElementById("resources");
+                    resourcesDiv.innerHTML = "";
+                    data.forEach(resource => {
+                        if (resource.type === "video") {
+                            resourcesDiv.innerHTML += `
+                                <div>
+                                    <iframe width="560" height="315" src="${resource.link}" frameborder="0" allowfullscreen></iframe>
+                                </div>
+                            `;
+                        } else if (resource.type === "file") {
+                            resourcesDiv.innerHTML += `
+                                <div>
+                                    <a href="${resource.link}" target="_blank">${resource.name}</a>
+                                </div>
+                            `;
+                        }
                     });
                 } else {
-                    alert("Eroare la încărcarea resurselor educaționale.");
+                    document.getElementById("errorMessage").innerText = data.error;
                 }
             } catch (error) {
-                console.error("Eroare la încărcarea resurselor educaționale:", error);
+                document.getElementById("errorMessage").innerText = "Fehler beim Laden (Eroare la încărcare)";
             }
         }
-        fetchLearningLinks();
     </script>
 </body>
 </html>

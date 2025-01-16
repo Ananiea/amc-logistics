@@ -1,62 +1,72 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Introducere Rută Zilnică</title>
+    <title>Tägliche Route einfügen (Introducere rută zilnică)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
-        <h1>Introducere Rută Zilnică</h1>
-        <form id="dailyRouteForm">
-            <input type="text" id="name" placeholder="Nume" readonly>
-            <input type="text" id="userId" placeholder="ID Utilizator" readonly>
-            <input type="date" id="date" required>
-            <input type="text" id="auto" placeholder="Auto" required>
-            <input type="number" id="tour" placeholder="Tour" min="1" max="4" required>
-            <input type="number" id="kunde" placeholder="Kunde" required>
-            <input type="time" id="start" required>
-            <input type="time" id="ende" required>
-            <button type="submit">Salvează</button>
+        <h1>Tägliche Route einfügen (Introducere rută zilnică)</h1>
+        <form id="routeForm">
+            <label for="name">Name (Nume)</label>
+            <input type="text" id="name" name="name" readonly>
+            <label for="userId">Benutzer-ID (ID Utilizator)</label>
+            <input type="text" id="userId" name="userId" readonly>
+            <label for="date">Datum (Data)</label>
+            <input type="date" id="date" name="date" required>
+            <label for="auto">Auto</label>
+            <input type="text" id="auto" name="auto" required>
+            <label for="tour">Tour</label>
+            <input type="number" id="tour" name="tour" min="1" max="4" required>
+            <label for="kunde">Kunde (Clienți)</label>
+            <input type="number" id="kunde" name="kunde" required>
+            <label for="start">Startzeit (Ora început)</label>
+            <input type="time" id="start" name="start" required>
+            <label for="ende">Endzeit (Ora sfârșit)</label>
+            <input type="time" id="ende" name="ende" required>
+            <button type="submit">Speichern (Salvează)</button>
         </form>
         <p id="successMessage" style="color:green;"></p>
         <p id="errorMessage" style="color:red;"></p>
     </main>
     <script>
-        document.getElementById("dailyRouteForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("name").value = localStorage.getItem("name");
+            document.getElementById("userId").value = localStorage.getItem("userId");
 
-            const routeData = {
-                userId: localStorage.getItem("userId"),
-                name: document.getElementById("name").value,
-                date: document.getElementById("date").value,
-                auto: document.getElementById("auto").value,
-                tour: document.getElementById("tour").value,
-                kunde: document.getElementById("kunde").value,
-                start: document.getElementById("start").value,
-                ende: document.getElementById("ende").value,
-            };
-
-            try {
-                const response = await fetch("/route", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                    body: JSON.stringify(routeData),
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    document.getElementById("successMessage").innerText = "Ruta a fost salvată!";
-                } else {
-                    document.getElementById("errorMessage").innerText = data.error;
+            document.getElementById("routeForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const formData = {
+                    userId: document.getElementById("userId").value,
+                    name: document.getElementById("name").value,
+                    date: document.getElementById("date").value,
+                    auto: document.getElementById("auto").value,
+                    tour: document.getElementById("tour").value,
+                    kunde: document.getElementById("kunde").value,
+                    start: document.getElementById("start").value,
+                    ende: document.getElementById("ende").value
+                };
+                try {
+                    const response = await fetch("/route", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("token")}`
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        document.getElementById("successMessage").innerText = "Route gespeichert! (Rută salvată!)";
+                    } else {
+                        document.getElementById("errorMessage").innerText = data.error;
+                    }
+                } catch (error) {
+                    document.getElementById("errorMessage").innerText = "Fehler beim Speichern (Eroare la salvare)";
                 }
-            } catch (error) {
-                document.getElementById("errorMessage").innerText = "Eroare la salvarea rutei.";
-            }
+            });
         });
     </script>
 </body>

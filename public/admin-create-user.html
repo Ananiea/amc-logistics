@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Benutzer hinzufügen (Adaugă utilizator)</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+</head>
+<body>
+    <main class="container">
+        <h1>Benutzer hinzufügen (Adaugă utilizator)</h1>
+        <form id="createUserForm">
+            <label for="name">Name (Nume):</label>
+            <input type="text" id="name" name="name" required>
+            <label for="userId">Benutzer-ID (ID Utilizator):</label>
+            <input type="text" id="userId" name="userId" required>
+            <label for="password">Passwort (Parola):</label>
+            <input type="password" id="password" name="password" required>
+            <label for="email">E-Mail (Mail):</label>
+            <input type="email" id="email" name="email" required>
+            <label for="phone">Telefonnummer (Număr de telefon):</label>
+            <input type="text" id="phone" name="phone" required>
+            <button type="submit">Hinzufügen (Adaugă)</button>
+        </form>
+        <p id="successMessage" style="color:green;"></p>
+        <p id="errorMessage" style="color:red;"></p>
+    </main>
+    <script>
+        document.getElementById("createUserForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = {
+                name: document.getElementById("name").value,
+                userId: document.getElementById("userId").value,
+                password: document.getElementById("password").value,
+                email: document.getElementById("email").value,
+                phone: document.getElementById("phone").value,
+            };
+            try {
+                const response = await fetch("/admin/create-user", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("successMessage").innerText = "Benutzer erfolgreich hinzugefügt! (Utilizator adăugat cu succes!)";
+                } else {
+                    document.getElementById("errorMessage").innerText = data.error;
+                }
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Fehler beim Hinzufügen (Eroare la adăugare)";
+            }
+        });
+    </script>
+</body>
+</html>
