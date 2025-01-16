@@ -45,6 +45,30 @@ app.get("/mediu-invatare", (req, res) => res.sendFile(path.join(__dirname, "publ
 app.get("/plan", (req, res) => res.sendFile(path.join(__dirname, "public", "plan.html")));
 app.get("/info", (req, res) => res.sendFile(path.join(__dirname, "public", "info.html")));
 
+app.post("/register", (req, res) => {
+    const { name, email, phone, password, role } = req.body;
+
+    // Verifică dacă toate câmpurile sunt completate
+    if (!name || !email || !phone || !password) {
+        return res.status(400).json({ error: "Toate câmpurile sunt obligatorii." });
+    }
+
+    // Hashează parola
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    // Adaugă utilizatorul în baza de date
+    const query = `INSERT INTO users (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)`;
+    db.run(query, [name, email, phone, hashedPassword, role || "courier"], function (err) {
+        if (err) {
+            if (err.message.includes("UNIQUE constraint")) {
+                return res.status(400).json({ error: "Email-ul este deja utilizat." });
+            }
+            return res.status(500).json({ error: `Eroare la înregistrare: ${err.message}` });
+        }
+        res.status(201).json({ message: "Utilizator înregistrat cu succes.", userId: this.lastID });
+    });
+});
+
 // Login
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
