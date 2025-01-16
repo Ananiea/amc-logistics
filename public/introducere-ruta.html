@@ -5,6 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tägliche Route einfügen (Introducere rută zilnică)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10;
+            --input-border-color: #dcdcdc; /* Gri deschis pentru chenare */
+            --input-focus-color: #ed7f10; /* Turcoaz pentru focus */
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #000;
+        }
+
+        main.container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            margin-bottom: 0.5rem;
+            display: block;
+            font-weight: bold;
+        }
+
+        input, button {
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: 0.7rem;
+            border: 2px solid var(--input-border-color); /* Chenar gri deschis */
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input:focus {
+            border-color: var(--input-focus-color); /* Schimbă chenarele în turcoaz */
+            outline: none;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        p {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -33,9 +96,11 @@
     </main>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Completare automată a numelui și ID-ului
             document.getElementById("name").value = localStorage.getItem("name");
             document.getElementById("userId").value = localStorage.getItem("userId");
 
+            // Gestionare formular
             document.getElementById("routeForm").addEventListener("submit", async (e) => {
                 e.preventDefault();
                 const formData = {
@@ -60,6 +125,7 @@
                     const data = await response.json();
                     if (response.ok) {
                         document.getElementById("successMessage").innerText = "Route gespeichert! (Rută salvată!)";
+                        document.getElementById("routeForm").reset();
                     } else {
                         document.getElementById("errorMessage").innerText = data.error;
                     }

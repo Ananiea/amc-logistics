@@ -5,6 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Passwort ändern (Schimbă parola)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #000;
+        }
+
+        main.container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        p#successMessage {
+            color: green;
+        }
+
+        p#errorMessage {
+            color: red;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -16,8 +83,8 @@
             <input type="password" id="confirmPassword" name="confirmPassword" required>
             <button type="submit">Speichern (Salvează)</button>
         </form>
-        <p id="successMessage" style="color:green;"></p>
-        <p id="errorMessage" style="color:red;"></p>
+        <p id="successMessage"></p>
+        <p id="errorMessage"></p>
     </main>
     <script>
         document.getElementById("changePasswordForm").addEventListener("submit", async (e) => {

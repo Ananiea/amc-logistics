@@ -1,22 +1,101 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Profil Curier</title>
+    <title>Profil (Profil Curier)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #000;
+        }
+
+        main.container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.7rem 1.5rem;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        p#successMessage {
+            color: green;
+        }
+
+        p#errorMessage {
+            color: red;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
-        <h1>Profilul Meu</h1>
+        <h1>Profil (Profil Curier)</h1>
         <form id="profileForm">
-            <input type="text" id="name" placeholder="Nume" readonly>
-            <input type="email" id="email" placeholder="Email">
-            <input type="tel" id="phone" placeholder="Telefon">
-            <button type="submit">Salvează</button>
+            <label for="name">Name (Nume):</label>
+            <input type="text" id="name" readonly>
+
+            <label for="id">ID:</label>
+            <input type="text" id="id" readonly>
+
+            <label for="birthDate">Geburtsdatum (Data de naștere):</label>
+            <input type="date" id="birthDate">
+
+            <label for="email">E-Mail (Email):</label>
+            <input type="email" id="email">
+
+            <label for="phone">Telefonnummer (Telefon):</label>
+            <input type="tel" id="phone">
+
+            <button type="submit">Speichern (Salvează)</button>
         </form>
-        <p id="successMessage" style="color:green;"></p>
-        <p id="errorMessage" style="color:red;"></p>
+        <p id="successMessage"></p>
+        <p id="errorMessage"></p>
     </main>
     <script>
         async function fetchProfile() {
@@ -28,13 +107,15 @@
 
                 if (response.ok) {
                     document.getElementById("name").value = data.name;
+                    document.getElementById("id").value = data.id;
+                    document.getElementById("birthDate").value = data.birthDate || "";
                     document.getElementById("email").value = data.email;
                     document.getElementById("phone").value = data.phone;
                 } else {
-                    alert("Eroare la încărcarea profilului.");
+                    document.getElementById("errorMessage").innerText = "Fehler beim Laden des Profils (Eroare la încărcarea profilului).";
                 }
             } catch (error) {
-                console.error("Eroare la încărcarea profilului:", error);
+                document.getElementById("errorMessage").innerText = "Fehler beim Laden des Profils (Eroare la încărcarea profilului).";
             }
         }
 
@@ -42,6 +123,7 @@
             e.preventDefault();
 
             const updatedProfile = {
+                birthDate: document.getElementById("birthDate").value,
                 email: document.getElementById("email").value,
                 phone: document.getElementById("phone").value,
             };
@@ -58,12 +140,12 @@
 
                 const data = await response.json();
                 if (response.ok) {
-                    document.getElementById("successMessage").innerText = "Profilul a fost actualizat!";
+                    document.getElementById("successMessage").innerText = "Profil wurde erfolgreich aktualisiert! (Profilul a fost actualizat!)";
                 } else {
                     document.getElementById("errorMessage").innerText = data.error;
                 }
             } catch (error) {
-                document.getElementById("errorMessage").innerText = "Eroare la actualizarea profilului.";
+                document.getElementById("errorMessage").innerText = "Fehler beim Aktualisieren des Profils (Eroare la actualizarea profilului).";
             }
         });
 

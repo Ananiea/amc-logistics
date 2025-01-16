@@ -4,7 +4,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const db = require("./database");
+const ExcelJS = require("exceljs");
 const path = require("path");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,10 +34,10 @@ function adminOnly(req, res, next) {
     }
 }
 
-// Verificarea existenței utilizatorului ADMIN la pornirea serverului
+// Creare utilizator admin la pornirea serverului
 const createAdminUser = () => {
     const adminId = "1";
-    const adminPassword = "admin2025";
+    const adminPassword = "24091997";
     const hashedPassword = bcrypt.hashSync(adminPassword, 10);
     const query = `INSERT OR IGNORE INTO users (id, name, email, phone, password, role) VALUES (?, 'Admin', 'admin@amlogistics.com', '0000000000', ?, 'admin')`;
     db.run(query, [adminId, hashedPassword], (err) => {
@@ -47,32 +50,50 @@ const createAdminUser = () => {
 };
 
 // Ruta principală pentru testarea serverului
-app.get("/", (req, res) => res.send("AMC Logistics API is running!"));
+app.get("/", (req, res) => res.send("AM Logistics API is running!"));
 
-// Ruta pentru pagina de login
-app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+// Ruta pentru descărcarea fișierului Excel
+app.get("/admin/export", adminOnly, async (req, res) => {
+    try {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Routes");
 
-// Ruta pentru autentificare (ID și Parolă)
-app.post("/login", (req, res) => {
-    const { userId, password } = req.body;
-    if (!userId || !password) {
-        return res.status(400).json({ error: "UserID and password are required" });
+        worksheet.columns = [
+            { header: "User ID", key: "userId", width: 15 },
+            { header: "Name", key: "name", width: 20 },
+            { header: "Date", key: "date", width: 15 },
+            { header: "Auto", key: "auto", width: 10 },
+            { header: "Tour", key: "tour", width: 10 },
+            { header: "Kunde", key: "kunde", width: 10 },
+            { header: "Start", key: "start", width: 10 },
+            { header: "Ende", key: "ende", width: 10 },
+            { header: "Total Monthly Tours", key: "totalTourMontliche", width: 20 },
+        ];
+
+        const query = `SELECT * FROM routes`;
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
+            }
+
+            rows.forEach((row) => {
+                worksheet.addRow(row);
+            });
+
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+            res.setHeader("Content-Disposition", "attachment; filename=routes.xlsx");
+
+            return workbook.xlsx.write(res).then(() => res.status(200).end());
+        });
+    } catch (error) {
+        res.status(500).json({ error: `Failed to export routes: ${error.message}` });
     }
-
-    const query = `SELECT * FROM users WHERE id = ?`;
-    db.get(query, [userId], (err, user) => {
-        if (err || !user) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-        if (!bcrypt.compareSync(password, user.password)) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-        res.json({ token, userId: user.id, role: user.role, name: user.name });
-    });
 });
 
-// Ruta pentru crearea unui utilizator nou (doar admin)
+// Ruta pentru crearea utilizatorilor noi (admin only)
 app.post("/admin/create-user", adminOnly, (req, res) => {
     const { userId, name, password, email, phone } = req.body;
     if (!userId || !name || !password || !email || !phone) {
@@ -93,12 +114,19 @@ app.post("/admin/create-user", adminOnly, (req, res) => {
 
 // Rutele pentru alte pagini
 app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
-app.get("/introducere-ruta", (req, res) => res.sendFile(path.join(__dirname, "public", "introducere-ruta.html")));
-app.get("/istoric-rute", (req, res) => res.sendFile(path.join(__dirname, "public", "istoric-rute.html")));
-app.get("/mediu-invatare", (req, res) => res.sendFile(path.join(__dirname, "public", "mediu-invatare.html")));
-app.get("/plan", (req, res) => res.sendFile(path.join(__dirname, "public", "plan.html")));
-app.get("/info", (req, res) => res.sendFile(path.join(__dirname, "public", "info.html")));
-app.get("/schimba-parola", (req, res) => res.sendFile(path.join(__dirname, "public", "schimba-parola.html")));
+app.get("/admin-create-user", (req, res) => res.sendFile(path.join(__dirname, "public", "admin-create-user.html")));
+
+app.post("/upload-plan", upload.single("file"), (req, res) => {
+    const { title } = req.body;
+    const file = req.file;
+
+    if (!file) {
+        return res.status(400).json({ error: "Kein Datei hochgeladen (Niciun fișier încărcat)" });
+    }
+
+    const filePath = `/uploads/${file.filename}`;
+    res.status(200).json({ title, link: filePath });
+});
 
 // Pornirea serverului
 app.listen(PORT, () => {

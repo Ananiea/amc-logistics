@@ -3,32 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Täglicher Plan (Plan zilnic)</title>
+    <title>Plan (Plan de lucru)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #000;
+        }
+
+        main.container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        #adminSection {
+            display: none; /* Ascuns pentru utilizatori non-admin */
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
-        <h1>Täglicher Plan (Plan zilnic)</h1>
-        <ul id="plans">
-            <!-- Planurile vor fi afișate aici -->
-        </ul>
+        <h1>Plan (Plan de lucru)</h1>
+        <section id="planSection">
+            <h2>Verfügbare Pläne (Planuri disponibile)</h2>
+            <ul id="planList">
+                <!-- Planurile vor fi afișate din JavaScript -->
+            </ul>
+        </section>
+        <section id="adminSection">
+            <h2>Neuen Plan hinzufügen (Adaugă plan nou)</h2>
+            <form id="adminForm">
+                <label for="title">Titel (Titlu):</label>
+                <input type="text" id="title" name="title" required>
+                <label for="file">Datei hochladen (Încarcă fișier):</label>
+                <input type="file" id="file" name="file" accept=".pdf,.jpg,.png" required>
+                <button type="submit">Hinzufügen (Adaugă)</button>
+            </form>
+        </section>
     </main>
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            const response = await fetch("/plans", {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                }
+        document.addEventListener("DOMContentLoaded", () => {
+            const role = localStorage.getItem("role");
+            const planList = document.getElementById("planList");
+
+            // Simulare planuri existente
+            const plans = [
+                { title: "Plan für Montag (Plan pentru Luni)", link: "https://example.com/monday-plan.jpg" },
+                { title: "Plan für Dienstag (Plan pentru Marți)", link: "https://example.com/tuesday-plan.jpg" }
+            ];
+
+            // Afișare planuri
+            plans.forEach(plan => {
+                const li = document.createElement("li");
+                li.innerHTML = `<a href="${plan.link}" target="_blank">${plan.title}</a>`;
+                planList.appendChild(li);
             });
-            const data = await response.json();
-            if (response.ok) {
-                const plansList = document.getElementById("plans");
-                data.forEach(plan => {
-                    plansList.innerHTML += `
-                        <li>
-                            <a href="${plan.link}" download>${plan.title}</a>
-                        </li>
-                    `;
+
+            // Afișare secțiune admin pentru utilizatori cu rolul "admin"
+            if (role === "admin") {
+                document.getElementById("adminSection").style.display = "block";
+
+                // Gestionare formular pentru planuri noi
+                document.getElementById("adminForm").addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const title = document.getElementById("title").value;
+                    const fileInput = document.getElementById("file");
+                    const file = fileInput.files[0];
+
+                    // Încărcare fișier către server
+                    const formData = new FormData();
+                    formData.append("title", title);
+                    formData.append("file", file);
+
+                    try {
+                        const response = await fetch("/upload-plan", {
+                            method: "POST",
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem("token")}`
+                            },
+                            body: formData
+                        });
+                        const data = await response.json();
+                        if (response.ok) {
+                            // Adaugă planul în listă
+                            const li = document.createElement("li");
+                            li.innerHTML = `<a href="${data.link}" target="_blank">${data.title}</a>`;
+                            planList.appendChild(li);
+
+                            // Resetează formularul
+                            document.getElementById("adminForm").reset();
+                        } else {
+                            alert(`Fehler: ${data.error}`);
+                        }
+                    } catch (error) {
+                        alert("Fehler beim Hochladen (Eroare la încărcare)");
+                    }
                 });
             }
         });

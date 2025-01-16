@@ -1,38 +1,103 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10; /* Noua culoare principală */
+        }
+
+        body {
+            background-color: #f9f9f9;
+        }
+
+        main.container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        h1 {
+            color: #000; /* Titlul scris cu negru */
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: calc(100% - 2rem);
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        #errorMessage {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
-        <h1>Login - AMC Logistics</h1>
+        <h1>LOGIN</h1>
         <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Parolă" required>
-            <button type="submit">Conectare</button>
+            <label for="userId">Benutzer-ID (ID Utilizator):</label>
+            <input type="text" id="userId" name="userId" placeholder="Geben Sie Ihre ID ein (Introduceți ID-ul)" required>
+            
+            <label for="password">Passwort (Parolă):</label>
+            <input type="password" id="password" name="password" placeholder="Geben Sie Ihr Passwort ein (Introduceți parola)" required>
+            
+            <button type="submit">Einloggen (Conectare)</button>
         </form>
         <p id="errorMessage" style="color:red;"></p>
     </main>
     <script>
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-            const email = document.getElementById("email").value;
+            const userId = document.getElementById("userId").value;
             const password = document.getElementById("password").value;
 
             try {
                 const response = await fetch("/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password }),
+                    body: JSON.stringify({ userId, password }),
                 });
 
                 const data = await response.json();
                 if (response.ok) {
                     localStorage.setItem("token", data.token);
                     localStorage.setItem("role", data.role);
+                    localStorage.setItem("userId", data.userId);
+                    localStorage.setItem("name", data.name);
+
                     if (data.role === "admin") {
                         window.location.href = "/admin";
                     } else {
@@ -42,7 +107,7 @@
                     document.getElementById("errorMessage").innerText = data.error;
                 }
             } catch (error) {
-                document.getElementById("errorMessage").innerText = "Eroare la conectare.";
+                document.getElementById("errorMessage").innerText = "Fehler bei der Anmeldung (Eroare la conectare).";
             }
         });
     </script>

@@ -5,6 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Routenhistorie (Istoric rute)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #000;
+        }
+
+        main.container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            margin-bottom: 0.5rem;
+            display: block;
+            font-weight: bold;
+        }
+
+        select, button {
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: 0.7rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.8rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        /* Ajustare lățime coloane */
+        th:nth-child(2), td:nth-child(2) { /* Coloana Auto */
+            width: 20%;
+        }
+
+        th:nth-child(4), td:nth-child(4) { /* Coloana Kunde */
+            width: 15%;
+        }
+
+        p {
+            color: red;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
@@ -39,13 +122,12 @@
             <tbody>
             </tbody>
         </table>
-        <p id="errorMessage" style="color:red;"></p>
+        <p id="errorMessage"></p>
     </main>
     <script>
         async function fetchRoutes() {
             const month = document.getElementById("month").value;
             const userId = localStorage.getItem("userId");
-            const year = new Date().getFullYear();
             const response = await fetch(`/route/${userId}/${month}`, {
                 method: "GET",
                 headers: {
@@ -53,21 +135,25 @@
                 }
             });
             const data = await response.json();
+            const tableBody = document.getElementById("routesTable").querySelector("tbody");
+            tableBody.innerHTML = "";
             if (response.ok) {
-                const tableBody = document.getElementById("routesTable").querySelector("tbody");
-                tableBody.innerHTML = "";
-                data.forEach(route => {
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td>${route.date}</td>
-                        <td>${route.auto}</td>
-                        <td>${route.tour}</td>
-                        <td>${route.kunde}</td>
-                        <td>${route.start}</td>
-                        <td>${route.ende}</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
+                if (data.length === 0) {
+                    document.getElementById("errorMessage").innerText = "Keine Daten gefunden (Nu s-au găsit date)";
+                } else {
+                    data.forEach(route => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${route.date}</td>
+                            <td>${route.auto}</td>
+                            <td>${route.tour}</td>
+                            <td>${route.kunde}</td>
+                            <td>${route.start}</td>
+                            <td>${route.ende}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
             } else {
                 document.getElementById("errorMessage").innerText = "Fehler beim Abrufen der Daten (Eroare la încărcare)";
             }

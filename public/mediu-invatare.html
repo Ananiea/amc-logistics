@@ -5,119 +5,145 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lernumgebung (Mediu de învățare)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #000;
+        }
+
+        main.container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        section {
+            margin-bottom: 1.5rem;
+        }
+
+        .resource-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .resource-list li {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        #adminSection {
+            display: none; /* Ascuns pentru utilizatori non-admin */
+        }
+    </style>
 </head>
 <body>
     <main class="container">
         <h1>Lernumgebung (Mediu de învățare)</h1>
-        <div id="resources">
-            <!-- Conținutul adăugat de admin va apărea aici -->
-        </div>
-        <div id="adminPanel" style="display: none;">
-            <h2>Admin-Bereich (Zona admin)</h2>
-            <form id="addVideoForm">
-                <label for="videoLink">YouTube-Link hinzufügen (Adaugă link YouTube):</label>
-                <input type="url" id="videoLink" name="videoLink" placeholder="https://www.youtube.com/watch?v=..." required>
+        <section id="resources">
+            <h2>Verfügbare Ressourcen (Resurse disponibile)</h2>
+            <ul class="resource-list" id="resourceList">
+                <!-- Resursele vor fi generate din JavaScript -->
+            </ul>
+        </section>
+        <section id="adminSection">
+            <h2>Neue Ressourcen hinzufügen (Adaugă resurse noi)</h2>
+            <form id="adminForm">
+                <label for="title">Titel (Titlu):</label>
+                <input type="text" id="title" name="title" required>
+                <label for="link">Link (YouTube/Datei):</label>
+                <input type="url" id="link" name="link" required>
                 <button type="submit">Hinzufügen (Adaugă)</button>
             </form>
-            <form id="uploadFileForm" enctype="multipart/form-data">
-                <label for="fileUpload">Datei hochladen (Încărcați un fișier):</label>
-                <input type="file" id="fileUpload" name="file" accept=".pdf,image/*" required>
-                <button type="submit">Hochladen (Încărcare)</button>
-            </form>
-        </div>
-        <p id="successMessage" style="color:green;"></p>
-        <p id="errorMessage" style="color:red;"></p>
+        </section>
     </main>
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
+        document.addEventListener("DOMContentLoaded", () => {
             const role = localStorage.getItem("role");
+            const resourceList = document.getElementById("resourceList");
+
+            // Simulare date existente
+            const resources = [
+                { title: "YouTube Video: Beispiel", link: "https://www.youtube.com/watch?v=example" },
+                { title: "Arbeitsplan PDF", link: "https://example.com/plan.pdf" }
+            ];
+
+            // Afișare resurse existente
+            resources.forEach(resource => {
+                const li = document.createElement("li");
+                li.innerHTML = `<a href="${resource.link}" target="_blank">${resource.title}</a>`;
+                resourceList.appendChild(li);
+            });
+
+            // Afișare secțiune admin dacă utilizatorul este admin
             if (role === "admin") {
-                document.getElementById("adminPanel").style.display = "block";
-            }
-            await loadResources();
+                document.getElementById("adminSection").style.display = "block";
 
-            document.getElementById("addVideoForm").addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const videoLink = document.getElementById("videoLink").value;
-                try {
-                    const response = await fetch("/admin/add-video", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${localStorage.getItem("token")}`
-                        },
-                        body: JSON.stringify({ videoLink })
-                    });
-                    const data = await response.json();
-                    if (response.ok) {
-                        document.getElementById("successMessage").innerText = "Video hinzugefügt! (Videoclip adăugat!)";
-                        await loadResources();
-                    } else {
-                        document.getElementById("errorMessage").innerText = data.error;
-                    }
-                } catch (error) {
-                    document.getElementById("errorMessage").innerText = "Fehler beim Hinzufügen (Eroare la adăugare)";
-                }
-            });
+                // Gestionare formular pentru resurse noi
+                document.getElementById("adminForm").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const title = document.getElementById("title").value;
+                    const link = document.getElementById("link").value;
 
-            document.getElementById("uploadFileForm").addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const formData = new FormData();
-                formData.append("file", document.getElementById("fileUpload").files[0]);
-                try {
-                    const response = await fetch("/admin/upload-file", {
-                        method: "POST",
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("token")}`
-                        },
-                        body: formData
-                    });
-                    const data = await response.json();
-                    if (response.ok) {
-                        document.getElementById("successMessage").innerText = "Datei hochgeladen! (Fișier încărcat!)";
-                        await loadResources();
-                    } else {
-                        document.getElementById("errorMessage").innerText = data.error;
-                    }
-                } catch (error) {
-                    document.getElementById("errorMessage").innerText = "Fehler beim Hochladen (Eroare la încărcare)";
-                }
-            });
-        });
+                    // Adaugă resursa în listă
+                    const li = document.createElement("li");
+                    li.innerHTML = `<a href="${link}" target="_blank">${title}</a>`;
+                    resourceList.appendChild(li);
 
-        async function loadResources() {
-            try {
-                const response = await fetch("/resources", {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
+                    // Resetează formularul
+                    document.getElementById("adminForm").reset();
                 });
-                const data = await response.json();
-                if (response.ok) {
-                    const resourcesDiv = document.getElementById("resources");
-                    resourcesDiv.innerHTML = "";
-                    data.forEach(resource => {
-                        if (resource.type === "video") {
-                            resourcesDiv.innerHTML += `
-                                <div>
-                                    <iframe width="560" height="315" src="${resource.link}" frameborder="0" allowfullscreen></iframe>
-                                </div>
-                            `;
-                        } else if (resource.type === "file") {
-                            resourcesDiv.innerHTML += `
-                                <div>
-                                    <a href="${resource.link}" target="_blank">${resource.name}</a>
-                                </div>
-                            `;
-                        }
-                    });
-                } else {
-                    document.getElementById("errorMessage").innerText = data.error;
-                }
-            } catch (error) {
-                document.getElementById("errorMessage").innerText = "Fehler beim Laden (Eroare la încărcare)";
             }
-        }
+        });
     </script>
 </body>
 </html>

@@ -5,25 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Benutzer hinzufügen (Adaugă utilizator)</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10; /* Noua culoare */
+        }
+
+        body {
+            background-color: #f9f9f9;
+        }
+
+        main.container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        h1 {
+            color: var(--primary-color);
+        }
+
+        input, button {
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 0.7rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
         <h1>Benutzer hinzufügen (Adaugă utilizator)</h1>
         <form id="createUserForm">
             <label for="name">Name (Nume):</label>
-            <input type="text" id="name" name="name" required>
+            <input type="text" id="name" name="name" placeholder="Name eingeben (Introduceți numele)" required>
+            
             <label for="userId">Benutzer-ID (ID Utilizator):</label>
-            <input type="text" id="userId" name="userId" required>
+            <input type="text" id="userId" name="userId" placeholder="Benutzer-ID eingeben (Introduceți ID-ul)" required>
+            
             <label for="password">Passwort (Parola):</label>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" placeholder="Passwort eingeben (Introduceți parola)" required>
+            
             <label for="email">E-Mail (Mail):</label>
-            <input type="email" id="email" name="email" required>
+            <input type="email" id="email" name="email" placeholder="E-Mail eingeben (Introduceți adresa de email)" required>
+            
             <label for="phone">Telefonnummer (Număr de telefon):</label>
-            <input type="text" id="phone" name="phone" required>
+            <input type="text" id="phone" name="phone" placeholder="Telefonnummer eingeben (Introduceți numărul de telefon)" required>
+            
             <button type="submit">Hinzufügen (Adaugă)</button>
         </form>
-        <p id="successMessage" style="color:green;"></p>
-        <p id="errorMessage" style="color:red;"></p>
+        <p id="successMessage" style="color:green; font-weight: bold;"></p>
+        <p id="errorMessage" style="color:red; font-weight: bold;"></p>
     </main>
     <script>
         document.getElementById("createUserForm").addEventListener("submit", async (e) => {
@@ -47,6 +92,7 @@
                 const data = await response.json();
                 if (response.ok) {
                     document.getElementById("successMessage").innerText = "Benutzer erfolgreich hinzugefügt! (Utilizator adăugat cu succes!)";
+                    document.getElementById("createUserForm").reset();
                 } else {
                     document.getElementById("errorMessage").innerText = data.error;
                 }
