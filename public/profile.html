@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Profil Curier</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+</head>
+<body>
+    <main class="container">
+        <h1>Profilul Meu</h1>
+        <form id="profileForm">
+            <input type="text" id="name" placeholder="Nume" readonly>
+            <input type="email" id="email" placeholder="Email">
+            <input type="tel" id="phone" placeholder="Telefon">
+            <button type="submit">Salvează</button>
+        </form>
+        <p id="successMessage" style="color:green;"></p>
+        <p id="errorMessage" style="color:red;"></p>
+    </main>
+    <script>
+        async function fetchProfile() {
+            try {
+                const response = await fetch(`/user/${localStorage.getItem("userId")}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById("name").value = data.name;
+                    document.getElementById("email").value = data.email;
+                    document.getElementById("phone").value = data.phone;
+                } else {
+                    alert("Eroare la încărcarea profilului.");
+                }
+            } catch (error) {
+                console.error("Eroare la încărcarea profilului:", error);
+            }
+        }
+
+        document.getElementById("profileForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const updatedProfile = {
+                email: document.getElementById("email").value,
+                phone: document.getElementById("phone").value,
+            };
+
+            try {
+                const response = await fetch(`/user/${localStorage.getItem("userId")}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify(updatedProfile),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("successMessage").innerText = "Profilul a fost actualizat!";
+                } else {
+                    document.getElementById("errorMessage").innerText = data.error;
+                }
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Eroare la actualizarea profilului.";
+            }
+        });
+
+        fetchProfile();
+    </script>
+</body>
+</html>

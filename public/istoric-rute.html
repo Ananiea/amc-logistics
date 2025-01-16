@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Istoric Rute</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+</head>
+<body>
+    <main class="container">
+        <h1>Istoric Rute</h1>
+        <table id="routesTable">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Auto</th>
+                    <th>Tour</th>
+                    <th>Kunde</th>
+                    <th>Start</th>
+                    <th>End</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </main>
+    <script>
+        async function fetchRoutes() {
+            try {
+                const response = await fetch(`/route/${localStorage.getItem("userId")}/currentMonth`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    const tableBody = document.querySelector("#routesTable tbody");
+                    data.forEach((route) => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${route.date}</td>
+                            <td>${route.auto}</td>
+                            <td>${route.tour}</td>
+                            <td>${route.kunde}</td>
+                            <td>${route.start}</td>
+                            <td>${route.ende}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    alert("Eroare la încărcarea istoricului.");
+                }
+            } catch (error) {
+                console.error("Eroare la încărcarea rutelor:", error);
+            }
+        }
+        fetchRoutes();
+    </script>
+</body>
+</html>

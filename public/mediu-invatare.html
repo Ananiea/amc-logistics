@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Plan Zilnic</title>
+    <title>Mediu de Învățare</title>
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
-        <h1>Plan Zilnic</h1>
-        <ul id="planLinks"></ul>
+        <h1>Mediu de Învățare</h1>
+        <ul id="learningLinks"></ul>
     </main>
     <script>
-        async function fetchPlanLinks() {
+        async function fetchLearningLinks() {
             try {
-                const response = await fetch("/plan", {
+                const response = await fetch("/learning", {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
                 });
                 const data = await response.json();
 
                 if (response.ok) {
-                    const list = document.getElementById("planLinks");
-                    data.forEach((plan) => {
+                    const list = document.getElementById("learningLinks");
+                    data.forEach((link) => {
                         const listItem = document.createElement("li");
-                        listItem.innerHTML = `<a href="${plan.url}" target="_blank">${plan.title}</a>`;
+                        listItem.innerHTML = `<a href="${link.url}" target="_blank">${link.title}</a>`;
                         list.appendChild(listItem);
                     });
                 } else {
-                    alert("Eroare la încărcarea planului zilnic.");
+                    alert("Eroare la încărcarea resurselor educaționale.");
                 }
             } catch (error) {
-                console.error("Eroare la încărcarea planului zilnic:", error);
+                console.error("Eroare la încărcarea resurselor educaționale:", error);
             }
         }
-        fetchPlanLinks();
+        fetchLearningLinks();
     </script>
 </body>
 </html>

@@ -1,72 +1,33 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="ro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AMC Logistics - Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <style>
-        body {
-            background-color: #e0f7f9;
-            color: #005f6a;
-        }
-        nav {
-            background-color: #00796b;
-        }
-        nav a {
-            color: white;
-        }
-        .dashboard {
-            text-align: center;
-            padding: 20px;
-        }
-        .dashboard h1 {
-            color: #00796b;
-        }
-        .dashboard-menu {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
-        .dashboard-menu a {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #00796b;
-            color: white;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 16px;
-        }
-        .dashboard-menu a:hover {
-            background-color: #005f6a;
-        }
-    </style>
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav>
-        <ul>
-            <li><strong>AMC Logistics</strong></li>
-        </ul>
-        <ul>
-            <li><a href="profile.html">Profil</a></li>
-            <li><a href="info.html">Info</a></li>
-            <li><a href="login.html" role="button">Logout</a></li>
-        </ul>
-    </nav>
-    <main class="container dashboard">
-        <h1>Willkommen!</h1>
-        <p>Wählen Sie eine Aktion aus:</p>
-        <div class="dashboard-menu">
-            <a href="daily_route.html">Tägliche Route eingeben</a>
-            <a href="route_history.html">Routenhistorie</a>
-            <a href="profile.html">Profil</a>
-            <a href="learning.html">Lernumgebung</a>
-            <a href="plan.html">Plan</a>
-            <a href="change_password.html">Passwort ändern</a>
-            <a href="info.html">Info</a>
-            <a href="login.html">Logout</a>
-        </div>
+    <main class="container">
+        <h1>Dashboard - AMC Logistics</h1>
+        <nav>
+            <ul>
+                <li><a href="/introducere-ruta">Introducere Rută Zilnică</a></li>
+                <li><a href="/istoric-rute">Istoric Rute</a></li>
+                <li><a href="/profile">Profil Curier</a></li>
+                <li><a href="/mediu-invatare">Mediu de Învățare</a></li>
+                <li><a href="/plan">Plan Zilnic</a></li>
+                <li><a href="/schimba-parola">Schimbă Parola</a></li>
+                <li><a href="/info">Informații</a></li>
+                <li><button id="logoutButton">Deconectare</button></li>
+            </ul>
+        </nav>
     </main>
+    <script>
+        document.getElementById("logoutButton").addEventListener("click", () => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            window.location.href = "/login";
+        });
+    </script>
 </body>
 </html>

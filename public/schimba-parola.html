@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Schimbă Parola</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+</head>
+<body>
+    <main class="container">
+        <h1>Schimbă Parola</h1>
+        <form id="changePasswordForm">
+            <input type="password" id="newPassword" placeholder="Parolă Nouă" required>
+            <input type="password" id="confirmPassword" placeholder="Confirmare Parolă" required>
+            <button type="submit">Schimbă Parola</button>
+        </form>
+        <p id="errorMessage" style="color:red;"></p>
+        <p id="successMessage" style="color:green;"></p>
+    </main>
+    <script>
+        document.getElementById("changePasswordForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const newPassword = document.getElementById("newPassword").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            if (newPassword !== confirmPassword) {
+                document.getElementById("errorMessage").innerText = "Parolele nu coincid!";
+                return;
+            }
+
+            try {
+                const response = await fetch("/user/password", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({ userId: localStorage.getItem("userId"), newPassword }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("successMessage").innerText = "Parola a fost schimbată!";
+                } else {
+                    document.getElementById("errorMessage").innerText = data.error;
+                }
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Eroare la schimbarea parolei.";
+            }
+        });
+    </script>
+</body>
+</html>

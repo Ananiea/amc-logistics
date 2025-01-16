@@ -10,18 +10,15 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Verifică variabilele de mediu
-if (!process.env.JWT_SECRET) {
-    console.error("ERROR: JWT_SECRET nu este setat în .env.");
-    process.exit(1);
-}
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware pentru acces doar de către admini
+// Setează folderul pentru fișierele statice
+app.use(express.static(path.join(__dirname, "public")));
+
+// Middleware pentru autentificare admin
 function adminOnly(req, res, next) {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -38,148 +35,78 @@ function adminOnly(req, res, next) {
     }
 }
 
-// Setează folderul pentru fișierele statice
-app.use(express.static(path.join(__dirname, "public")));
+// Rute HTML
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/introducere-ruta", (req, res) => res.sendFile(path.join(__dirname, "public", "introducere-ruta.html")));
+app.get("/istoric-rute", (req, res) => res.sendFile(path.join(__dirname, "public", "istoric-rute.html")));
+app.get("/schimba-parola", (req, res) => res.sendFile(path.join(__dirname, "public", "schimba-parola.html")));
+app.get("/mediu-invatare", (req, res) => res.sendFile(path.join(__dirname, "public", "mediu-invatare.html")));
+app.get("/plan", (req, res) => res.sendFile(path.join(__dirname, "public", "plan.html")));
+app.get("/info", (req, res) => res.sendFile(path.join(__dirname, "public", "info.html")));
 
-// Ruta principală pentru testarea serverului
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// Rutele pentru paginile HTML
-app.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "login.html"));
-});
-
-app.get("/dashboard", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
-
-app.get("/profile", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "profile.html"));
-});
-
-// Ruta pentru testarea bazei de date
-app.get("/test-db", (req, res) => {
-    const query = `SELECT name FROM sqlite_master WHERE type='table'`;
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: `Database error: ${err.message}` });
-        }
-        res.json({ tables: rows });
-    });
-});
-
-// Register Route
-app.post("/register", (req, res) => {
-    const { name, email, phone, password, role } = req.body;
-
-    if (!name || !email || !phone || !password) {
-        return res.status(400).json({ error: "All fields are required" });
-    }
-
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const query = `INSERT INTO users (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)`;
-    db.run(query, [name, email, phone, hashedPassword, role || "courier"], function (err) {
-        if (err) {
-            if (err.message.includes("UNIQUE constraint")) {
-                return res.status(400).json({ error: "Email already in use" });
-            }
-            return res.status(500).json({ error: `Registration failed: ${err.message}` });
-        }
-        res.status(201).json({ message: "User registered successfully", userId: this.lastID });
-    });
-});
-
-// Login Route
+// Login
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
+        return res.status(400).json({ error: "Email și parolă necesare" });
     }
 
     const query = `SELECT * FROM users WHERE email = ?`;
     db.get(query, [email], (err, user) => {
         if (err || !user) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({ error: "Credențiale invalide" });
         }
-
         if (!bcrypt.compareSync(password, user.password)) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({ error: "Credențiale invalide" });
         }
-
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
         res.json({ token, userId: user.id, role: user.role });
     });
 });
 
-// Save Route
+// Salvare rută zilnică
 app.post("/route", (req, res) => {
     const { userId, name, date, auto, tour, kunde, start, ende } = req.body;
-
     if (!userId || !name || !date || !auto || !tour || !kunde || !start || !ende) {
-        return res.status(400).json({ error: "All fields are required" });
+        return res.status(400).json({ error: "Toate câmpurile sunt obligatorii" });
     }
-
-    const queryTotal = `SELECT COUNT(*) AS total FROM routes WHERE userId = ? AND date >= date('now', 'start of month')`;
-    db.get(queryTotal, [userId], (err, result) => {
+    const query = `INSERT INTO routes (userId, name, date, auto, tour, kunde, start, ende) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.run(query, [userId, name, date, auto, tour, kunde, start, ende], function (err) {
         if (err) {
-            return res.status(500).json({ error: `Failed to calculate total: ${err.message}` });
+            return res.status(500).json({ error: "Eroare la salvarea rutei" });
         }
-
-        const totalTourMontliche = result.total + 1;
-
-        const query = `INSERT INTO routes (userId, name, date, auto, tour, kunde, start, ende, totalTourMontliche) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        db.run(query, [userId, name, date, auto, tour, kunde, start, ende, totalTourMontliche], function (err) {
-            if (err) {
-                return res.status(500).json({ error: `Failed to save route: ${err.message}` });
-            }
-            res.status(201).json({ message: "Route saved successfully", routeId: this.lastID });
-        });
+        res.status(201).json({ message: "Rută salvată cu succes" });
     });
 });
 
-// Export Routes to Excel
+// Export către Excel
 app.get("/admin/export", adminOnly, async (req, res) => {
-    try {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Routes");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Routes");
+    worksheet.columns = [
+        { header: "User ID", key: "userId", width: 15 },
+        { header: "Name", key: "name", width: 20 },
+        { header: "Date", key: "date", width: 15 },
+        { header: "Auto", key: "auto", width: 10 },
+        { header: "Tour", key: "tour", width: 10 },
+        { header: "Kunde", key: "kunde", width: 10 },
+        { header: "Start", key: "start", width: 10 },
+        { header: "End", key: "ende", width: 10 },
+    ];
 
-        worksheet.columns = [
-            { header: "User ID", key: "userId", width: 15 },
-            { header: "Name", key: "name", width: 20 },
-            { header: "Date", key: "date", width: 15 },
-            { header: "Auto", key: "auto", width: 10 },
-            { header: "Tour", key: "tour", width: 10 },
-            { header: "Kunde", key: "kunde", width: 10 },
-            { header: "Start", key: "start", width: 10 },
-            { header: "Ende", key: "ende", width: 10 },
-            { header: "Total Monthly Tours", key: "totalTourMontliche", width: 20 },
-        ];
-
-        const query = `SELECT * FROM routes`;
-        db.all(query, [], (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
-            }
-
-            rows.forEach((row) => {
-                worksheet.addRow(row);
-            });
-
-            res.setHeader(
-                "Content-Type",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            );
-            res.setHeader("Content-Disposition", "attachment; filename=routes.xlsx");
-
-            return workbook.xlsx.write(res).then(() => res.status(200).end());
-        });
-    } catch (error) {
-        res.status(500).json({ error: `Failed to export routes: ${error.message}` });
-    }
+    const query = `SELECT * FROM routes`;
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: "Eroare la export" });
+        }
+        rows.forEach((row) => worksheet.addRow(row));
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=routes.xlsx");
+        return workbook.xlsx.write(res).then(() => res.status(200).end());
+    });
 });
 
-// Pornirea serverului
+// Pornire server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+

@@ -1,50 +1,35 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="ro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AMC Logistics - Info</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <style>
-        body {
-            background-color: #e0f7f9;
-            color: #005f6a;
-        }
-        .info-section {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            padding: 20px;
-            border: 1px solid #b2ebf2;
-            border-radius: 8px;
-        }
-        .info-section h2 {
-            color: #00796b;
-        }
-        .info-section p {
-            margin: 10px 0;
-        }
-    </style>
+    <title>Informații</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
 </head>
 <body>
     <main class="container">
-        <h1>Info</h1>
-        <div class="info-section">
-            <h2>Team-Leader Kontakt</h2>
-            <p><strong>Max Mustermann</strong></p>
-            <p>Telefon: 0123456789</p>
-            <p>E-Mail: max.mustermann@example.com</p>
-        </div>
-        <div class="info-section">
-            <h2>Depotadresse</h2>
-            <p>AMC Logistics Depot</p>
-            <p>Hauptstraße 123</p>
-            <p>12345 Musterstadt</p>
-        </div>
-        <div class="info-section">
-            <h2>Weitere Informationen</h2>
-            <p>Für Fragen wenden Sie sich bitte an Ihren Team-Leader.</p>
-        </div>
+        <h1>Informații</h1>
+        <div id="infoContent"></div>
     </main>
+    <script>
+        async function fetchInfo() {
+            try {
+                const response = await fetch("/info", {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    const infoContent = document.getElementById("infoContent");
+                    infoContent.innerHTML = `<p>${data.content}</p>`;
+                } else {
+                    alert("Eroare la încărcarea informațiilor.");
+                }
+            } catch (error) {
+                console.error("Eroare la încărcarea informațiilor:", error);
+            }
+        }
+        fetchInfo();
+    </script>
 </body>
 </html>

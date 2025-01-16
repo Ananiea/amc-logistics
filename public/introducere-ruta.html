@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Introducere Rută Zilnică</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+</head>
+<body>
+    <main class="container">
+        <h1>Introducere Rută Zilnică</h1>
+        <form id="dailyRouteForm">
+            <input type="text" id="name" placeholder="Nume" readonly>
+            <input type="text" id="userId" placeholder="ID Utilizator" readonly>
+            <input type="date" id="date" required>
+            <input type="text" id="auto" placeholder="Auto" required>
+            <input type="number" id="tour" placeholder="Tour" min="1" max="4" required>
+            <input type="number" id="kunde" placeholder="Kunde" required>
+            <input type="time" id="start" required>
+            <input type="time" id="ende" required>
+            <button type="submit">Salvează</button>
+        </form>
+        <p id="successMessage" style="color:green;"></p>
+        <p id="errorMessage" style="color:red;"></p>
+    </main>
+    <script>
+        document.getElementById("dailyRouteForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const routeData = {
+                userId: localStorage.getItem("userId"),
+                name: document.getElementById("name").value,
+                date: document.getElementById("date").value,
+                auto: document.getElementById("auto").value,
+                tour: document.getElementById("tour").value,
+                kunde: document.getElementById("kunde").value,
+                start: document.getElementById("start").value,
+                ende: document.getElementById("ende").value,
+            };
+
+            try {
+                const response = await fetch("/route", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify(routeData),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("successMessage").innerText = "Ruta a fost salvată!";
+                } else {
+                    document.getElementById("errorMessage").innerText = data.error;
+                }
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Eroare la salvarea rutei.";
+            }
+        });
+    </script>
+</body>
+</html>
