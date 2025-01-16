@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #ed7f10; /* Noua culoare */
+            --primary-color: #ed7f10;
         }
 
         body {
@@ -49,55 +49,35 @@
 <body>
     <main class="container">
         <h1>Benutzer hinzufügen (Adaugă utilizator)</h1>
-        <form id="createUserForm">
-            <label for="name">Name (Nume):</label>
-            <input type="text" id="name" name="name" placeholder="Name eingeben (Introduceți numele)" required>
-            
-            <label for="userId">Benutzer-ID (ID Utilizator):</label>
-            <input type="text" id="userId" name="userId" placeholder="Benutzer-ID eingeben (Introduceți ID-ul)" required>
-            
-            <label for="password">Passwort (Parola):</label>
-            <input type="password" id="password" name="password" placeholder="Passwort eingeben (Introduceți parola)" required>
-            
-            <label for="email">E-Mail (Mail):</label>
-            <input type="email" id="email" name="email" placeholder="E-Mail eingeben (Introduceți adresa de email)" required>
-            
-            <label for="phone">Telefonnummer (Număr de telefon):</label>
-            <input type="text" id="phone" name="phone" placeholder="Telefonnummer eingeben (Introduceți numărul de telefon)" required>
-            
-            <button type="submit">Hinzufügen (Adaugă)</button>
+        <form id="bulkUploadForm">
+            <label for="file">CSV-Datei hochladen (Încărcați fișierul CSV):</label>
+            <input type="file" id="file" name="file" accept=".csv" required>
+            <button type="submit">Hochladen (Încărcați)</button>
         </form>
         <p id="successMessage" style="color:green; font-weight: bold;"></p>
         <p id="errorMessage" style="color:red; font-weight: bold;"></p>
     </main>
     <script>
-        document.getElementById("createUserForm").addEventListener("submit", async (e) => {
+        document.getElementById("bulkUploadForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-            const formData = {
-                name: document.getElementById("name").value,
-                userId: document.getElementById("userId").value,
-                password: document.getElementById("password").value,
-                email: document.getElementById("email").value,
-                phone: document.getElementById("phone").value,
-            };
+            const fileInput = document.getElementById("file").files[0];
+            const formData = new FormData();
+            formData.append("file", fileInput);
+
             try {
-                const response = await fetch("/admin/create-user", {
+                const response = await fetch("/admin/bulk-upload", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
-                    },
-                    body: JSON.stringify(formData)
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                    body: formData,
                 });
                 const data = await response.json();
                 if (response.ok) {
-                    document.getElementById("successMessage").innerText = "Benutzer erfolgreich hinzugefügt! (Utilizator adăugat cu succes!)";
-                    document.getElementById("createUserForm").reset();
+                    document.getElementById("successMessage").innerText = `${data.successCount} Benutzer erfolgreich hinzugefügt! (Utilizatori adăugați cu succes!)`;
                 } else {
-                    document.getElementById("errorMessage").innerText = data.error;
+                    document.getElementById("errorMessage").innerText = data.errors.join(", ");
                 }
             } catch (error) {
-                document.getElementById("errorMessage").innerText = "Fehler beim Hinzufügen (Eroare la adăugare)";
+                document.getElementById("errorMessage").innerText = "Fehler beim Hochladen (Eroare la încărcare)";
             }
         });
     </script>

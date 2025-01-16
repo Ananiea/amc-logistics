@@ -1,3 +1,4 @@
+// Cod complet modificat pentru server.js, inclusiv endpoint-ul de încărcare CSV:
 require("dotenv").config();
 const express = require("express");
 const bcrypt = require("bcryptjs");
@@ -5,9 +6,11 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const db = require("./database");
 const ExcelJS = require("exceljs");
-const path = require("path");
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
+const fs = require("fs");
+const path = require("path");
+const readline = require("readline");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,102 +37,59 @@ function adminOnly(req, res, next) {
     }
 }
 
-// Creare utilizator admin la pornirea serverului
-const createAdminUser = () => {
-    const adminId = "1";
-    const adminPassword = "24091997";
-    const hashedPassword = bcrypt.hashSync(adminPassword, 10);
-    const query = `INSERT OR IGNORE INTO users (id, name, email, phone, password, role) VALUES (?, 'Admin', 'admin@amlogistics.com', '0000000000', ?, 'admin')`;
-    db.run(query, [adminId, hashedPassword], (err) => {
-        if (err) {
-            console.error("Error creating admin user:", err.message);
-        } else {
-            console.log("Admin user verified/created successfully.");
-        }
-    });
-};
-
-// Ruta principală pentru testarea serverului
-app.get("/", (req, res) => res.send("AM Logistics API is running!"));
-
-// Ruta pentru descărcarea fișierului Excel
-app.get("/admin/export", adminOnly, async (req, res) => {
-    try {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Routes");
-
-        worksheet.columns = [
-            { header: "User ID", key: "userId", width: 15 },
-            { header: "Name", key: "name", width: 20 },
-            { header: "Date", key: "date", width: 15 },
-            { header: "Auto", key: "auto", width: 10 },
-            { header: "Tour", key: "tour", width: 10 },
-            { header: "Kunde", key: "kunde", width: 10 },
-            { header: "Start", key: "start", width: 10 },
-            { header: "Ende", key: "ende", width: 10 },
-            { header: "Total Monthly Tours", key: "totalTourMontliche", width: 20 },
-        ];
-
-        const query = `SELECT * FROM routes`;
-        db.all(query, [], (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
-            }
-
-            rows.forEach((row) => {
-                worksheet.addRow(row);
-            });
-
-            res.setHeader(
-                "Content-Type",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            );
-            res.setHeader("Content-Disposition", "attachment; filename=routes.xlsx");
-
-            return workbook.xlsx.write(res).then(() => res.status(200).end());
-        });
-    } catch (error) {
-        res.status(500).json({ error: `Failed to export routes: ${error.message}` });
-    }
-});
-
-// Ruta pentru crearea utilizatorilor noi (admin only)
-app.post("/admin/create-user", adminOnly, (req, res) => {
-    const { userId, name, password, email, phone } = req.body;
-    if (!userId || !name || !password || !email || !phone) {
-        return res.status(400).json({ error: "All fields are required" });
-    }
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const query = `INSERT INTO users (id, name, email, phone, password, role) VALUES (?, ?, ?, ?, ?, 'courier')`;
-    db.run(query, [userId, name, email, phone, hashedPassword], (err) => {
-        if (err) {
-            if (err.message.includes("UNIQUE constraint")) {
-                return res.status(400).json({ error: "UserID already in use" });
-            }
-            return res.status(500).json({ error: `Failed to create user: ${err.message}` });
-        }
-        res.status(201).json({ message: "User created successfully" });
-    });
-});
-
-// Rutele pentru alte pagini
-app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
-app.get("/admin-create-user", (req, res) => res.sendFile(path.join(__dirname, "public", "admin-create-user.html")));
-
-app.post("/upload-plan", upload.single("file"), (req, res) => {
-    const { title } = req.body;
+// Endpoint pentru încărcarea unui fișier CSV
+app.post("/admin/bulk-upload", adminOnly, upload.single("file"), async (req, res) => {
     const file = req.file;
 
     if (!file) {
-        return res.status(400).json({ error: "Kein Datei hochgeladen (Niciun fișier încărcat)" });
+        return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const filePath = `/uploads/${file.filename}`;
-    res.status(200).json({ title, link: filePath });
+    const filePath = path.join(__dirname, file.path);
+    const fileStream = fs.createReadStream(filePath);
+
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+    });
+
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    for await (const line of rl) {
+        const [name, id, password, email, phone] = line.split(",");
+        if (!name || !id || !password || !email || !phone) {
+            errors.push(`Invalid data: ${line}`);
+            errorCount++;
+            continue;
+        }
+
+        const hashedPassword = bcrypt.hashSync(password.trim(), 10);
+
+        const query = `INSERT INTO users (id, name, email, phone, password, role) VALUES (?, ?, ?, ?, ?, 'courier')`;
+        db.run(query, [id.trim(), name.trim(), email.trim(), phone.trim(), hashedPassword], (err) => {
+            if (err) {
+                errors.push(`Error adding user ${id.trim()}: ${err.message}`);
+                errorCount++;
+            } else {
+                successCount++;
+            }
+        });
+    }
+
+    rl.on("close", () => {
+        fs.unlinkSync(filePath); // Șterge fișierul încărcat după procesare
+        res.json({
+            message: "Upload completed",
+            successCount,
+            errorCount,
+            errors,
+        });
+    });
 });
 
-// Pornirea serverului
+// Pornire server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    createAdminUser();
 });
