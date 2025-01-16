@@ -36,6 +36,17 @@ app.get("/", (req, res) => {
     res.status(200).send("AMC Logistics API is running with SQLite!");
 });
 
+// Route: TEST Database
+app.get("/test-db", (req, res) => {
+    const query = `SELECT name FROM sqlite_master WHERE type='table'`;
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: `Database error: ${err.message}` });
+        }
+        res.json({ tables: rows });
+    });
+});
+
 // Route: Register
 app.post("/register", (req, res) => {
     const { name, email, phone, password, role } = req.body;
