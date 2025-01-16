@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const db = require("./database");
 const ExcelJS = require("exceljs");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,9 +38,25 @@ function adminOnly(req, res, next) {
     }
 }
 
+// Setează folderul pentru fișierele statice
+app.use(express.static(path.join(__dirname, "public")));
+
 // Ruta principală pentru testarea serverului
 app.get("/", (req, res) => {
-    res.status(200).send("AMC Logistics API is running!");
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Rutele pentru paginile HTML
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/dashboard", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+app.get("/profile", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "profile.html"));
 });
 
 // Ruta pentru testarea bazei de date
@@ -51,11 +68,6 @@ app.get("/test-db", (req, res) => {
         }
         res.json({ tables: rows });
     });
-});
-
-// Ruta pentru GET /login
-app.get("/login", (req, res) => {
-    res.status(200).send("Use POST /login with credentials to authenticate.");
 });
 
 // Register Route
@@ -125,30 +137,6 @@ app.post("/route", (req, res) => {
             }
             res.status(201).json({ message: "Route saved successfully", routeId: this.lastID });
         });
-    });
-});
-
-// Update Password
-app.put("/user/password", (req, res) => {
-    const { userId, newPassword } = req.body;
-
-    if (!userId || !newPassword) {
-        return res.status(400).json({ error: "UserId and newPassword are required" });
-    }
-
-    const hashedPassword = bcrypt.hashSync(newPassword, 10);
-
-    const query = `UPDATE users SET password = ? WHERE id = ?`;
-    db.run(query, [hashedPassword, userId], function (err) {
-        if (err) {
-            return res.status(500).json({ error: `Failed to update password: ${err.message}` });
-        }
-
-        if (this.changes === 0) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        res.status(200).json({ message: "Password updated successfully" });
     });
 });
 
