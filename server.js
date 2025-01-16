@@ -1,4 +1,3 @@
-// Cod complet modificat pentru server.js, inclusiv endpoint-ul de încărcare CSV:
 require("dotenv").config();
 const express = require("express");
 const bcrypt = require("bcryptjs");
@@ -19,6 +18,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Middleware pentru verificarea rolului de admin
 function adminOnly(req, res, next) {
@@ -36,6 +36,47 @@ function adminOnly(req, res, next) {
         return res.status(401).json({ error: "Invalid token" });
     }
 }
+
+// Servirea fișierelor HTML pentru pagini
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/dashboard", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+app.get("/admin-create-user", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "admin-create-user.html"));
+});
+
+app.get("/info", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "info.html"));
+});
+
+app.get("/introducere-ruta", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "introducere-ruta.html"));
+});
+
+app.get("/istoric-rute", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "istoric-rute.html"));
+});
+
+app.get("/mediu-invatare", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "mediu-invatare.html"));
+});
+
+app.get("/plan", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "plan.html"));
+});
+
+app.get("/profile", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "profile.html"));
+});
+
+app.get("/schimba-parola", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "schimba-parola.html"));
+});
 
 // Endpoint pentru încărcarea unui fișier CSV
 app.post("/admin/bulk-upload", adminOnly, upload.single("file"), async (req, res) => {
