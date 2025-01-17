@@ -86,14 +86,20 @@ function adminOnly(req, res, next) {
 
 // Ruta de login
 app.post("/login", (req, res) => {
+    console.log("Request Body:", req.body);
+
     const { userId, password } = req.body;
 
     if (!userId || !password) {
+        console.log("Missing credentials");
         return res.status(400).json({ error: "User ID and password are required" });
     }
 
     const query = `SELECT * FROM users WHERE id = ?`;
     db.get(query, [userId], (err, user) => {
+        console.log("DB Error:", err);
+        console.log("User Found:", user);
+
         if (err || !user) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
