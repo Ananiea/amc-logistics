@@ -130,10 +130,12 @@ app.post("/login", (req, res) => {
             return res.status(401).json({ error: "Invalid credentials" });
         }
 
+        // Compararea parolei criptate
         if (!bcrypt.compareSync(password, user.password)) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
 
+        // Generare token și autentificare reușită
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
         res.json({ token, userId: user.id, role: user.role, name: user.name });
     });
