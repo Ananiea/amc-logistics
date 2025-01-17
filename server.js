@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configurare baza de date SQLite
-const db = new sqlite3.Database("./amc-logistics.db", (err) => {
+const db = new sqlite3.Database(path.join(__dirname, "amc-logistics.db"), (err) => {
     if (err) {
         console.error("Error connecting to SQLite database:", err.message);
     } else {
@@ -54,16 +54,23 @@ app.use(express.urlencoded({ extended: true }));
 // Servirea fișierelor HTML
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "login.html"));
-});
+const staticPages = [
+    "login",
+    "dashboard",
+    "admin-create-user",
+    "info",
+    "introducere-ruta",
+    "istoric-rute",
+    "mediu-invatare",
+    "plan",
+    "profile",
+    "schimba-parola",
+];
 
-app.get("/dashboard", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
-
-app.get("/admin-create-user", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "admin-create-user.html"));
+staticPages.forEach((page) => {
+    app.get(`/${page}`, (req, res) => {
+        res.sendFile(path.join(__dirname, "public", `${page}.html`));
+    });
 });
 
 // Pagina principală (root)
