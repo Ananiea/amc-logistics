@@ -72,14 +72,10 @@ app.post("/login", (req, res) => {
         }
 
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-        res.json({ 
-            token, 
-            userId: user.id, 
-            role: user.role, 
-            name: user.name 
-        });
+        res.json({ token, userId: user.id, role: user.role, name: user.name });
     });
 });
+
 
 // Endpoint pentru încărcarea unui fișier CSV
 app.post("/admin/bulk-upload", adminOnly, upload.single("file"), async (req, res) => {
