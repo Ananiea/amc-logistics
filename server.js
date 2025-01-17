@@ -7,7 +7,53 @@ const ExcelJS = require("exceljs");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
+// Configurare server
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Configurare baza de date SQLite
+const db = new sqlite3.Database("./amc-logistics.db", (err) => {
+    if (err) {
+        console.error("Error connecting to SQLite database:", err.message);
+    } else {
+        console.log("Connected to SQLite database.");
+    }
+});
+
+// Creare tabele dacă nu există
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT DEFAULT 'courier'
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS routes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        date TEXT NOT NULL,
+        auto TEXT NOT NULL,
+        tour INTEGER NOT NULL,
+        kunde INTEGER NOT NULL,
+        start TEXT NOT NULL,
+        ende TEXT NOT NULL,
+        totalTourMontliche INTEGER DEFAULT 0,
+        FOREIGN KEY (userId) REFERENCES users (id)
+    )`);
+});
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Servirea fișierelor HTML
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/login", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "login.html"));
 });
@@ -52,50 +98,6 @@ app.get("/schimba-parola", (req, res) => {
 app.get("/", (req, res) => {
     res.redirect("/login");
 });
-
-// Configurare server
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Configurare baza de date SQLite
-const db = new sqlite3.Database("./amc-logistics.db", (err) => {
-    if (err) {
-        console.error("Error connecting to SQLite database:", err.message);
-    } else {
-        console.log("Connected to SQLite database.");
-    }
-});
-
-// Creare tabele dacă nu există
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        phone TEXT NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT DEFAULT 'courier'
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS routes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        date TEXT NOT NULL,
-        auto TEXT NOT NULL,
-        tour INTEGER NOT NULL,
-        kunde INTEGER NOT NULL,
-        start TEXT NOT NULL,
-        ende TEXT NOT NULL,
-        totalTourMontliche INTEGER DEFAULT 0,
-        FOREIGN KEY (userId) REFERENCES users (id)
-    )`);
-});
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Middleware pentru autentificare Admin
 function adminOnly(req, res, next) {
@@ -201,9 +203,6 @@ app.get("/admin/export", adminOnly, async (req, res) => {
         return workbook.xlsx.write(res).then(() => res.status(200).end());
     });
 });
-
-// Servirea fișierelor statice
-app.use(express.static(path.join(__dirname, "public")));
 
 // Pornirea serverului
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
