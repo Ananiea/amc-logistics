@@ -3,119 +3,166 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
-const { Pool } = require("pg");
-const multer = require("multer");
+const ExcelJS = require("exceljs");
+const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
-const fs = require("fs");
 
+// Configurare server
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configurare PostgreSQL
-const db = new Pool({
-    host: process.env.PG_HOST || "localhost",
-    user: process.env.PG_USER || "amc_user",
-    password: process.env.PG_PASSWORD || "securepassword",
-    database: process.env.PG_DATABASE || "amc_logistics",
-    port: process.env.PG_PORT || 5432,
-    ssl: { rejectUnauthorized: false },
+// Configurare baza de date SQLite
+const db = new sqlite3.Database("./amc-logistics.db", (err) => {
+    if (err) {
+        console.error("Error connecting to SQLite database:", err.message);
+    } else {
+        console.log("Connected to SQLite database.");
+    }
 });
 
-// Testare conexiune PostgreSQL
-db.connect()
-    .then(() => console.log("Conectat la baza de date PostgreSQL!"))
-    .catch((err) => {
-        console.error("Eroare la conectarea cu baza de date:", err);
-        process.exit(1);
-    });
+// Creare tabele dacă nu există
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT DEFAULT 'courier'
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS routes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        date TEXT NOT NULL,
+        auto TEXT NOT NULL,
+        tour INTEGER NOT NULL,
+        kunde INTEGER NOT NULL,
+        start TEXT NOT NULL,
+        ende TEXT NOT NULL,
+        totalTourMontliche INTEGER DEFAULT 0,
+        FOREIGN KEY (userId) REFERENCES users (id)
+    )`);
+});
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
 
-// Middleware pentru acces doar de admin
+// Middleware pentru autentificare Admin
 function adminOnly(req, res, next) {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-        return res.status(401).json({ error: "Neautorizat: Token lipsă" });
+        return res.status(401).json({ error: "Unauthorized: No token provided" });
     }
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         if (decoded.role !== "admin") {
-            return res.status(403).json({ error: "Acces interzis: Doar pentru admin" });
+            return res.status(403).json({ error: "Access forbidden: Admins only" });
         }
         next();
     } catch (err) {
-        return res.status(401).json({ error: "Token invalid" });
+        return res.status(401).json({ error: "Invalid token" });
     }
 }
 
-// Ruta principală pentru testarea serverului
+// Ruta principală
 app.get("/", (req, res) => {
-    res.status(200).send("AMC Logistics API este activ!");
+    res.status(200).send("AMC Logistics API is running with SQLite!");
 });
 
-// Ruta pentru login
-app.post("/login", async (req, res) => {
+// Ruta de login
+app.post("/login", (req, res) => {
     const { userId, password } = req.body;
 
     if (!userId || !password) {
-        return res.status(400).json({ error: "ID și parola sunt necesare" });
+        return res.status(400).json({ error: "User ID and password are required" });
     }
 
-    const query = "SELECT * FROM users WHERE id = $1";
-    try {
-        const { rows } = await db.query(query, [userId]);
-        if (rows.length === 0) {
-            return res.status(401).json({ error: "Informații de autentificare invalide" });
+    const query = `SELECT * FROM users WHERE id = ?`;
+    db.get(query, [userId], (err, user) => {
+        if (err || !user) {
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
-        const user = rows[0];
         if (!bcrypt.compareSync(password, user.password)) {
-            return res.status(401).json({ error: "Informații de autentificare invalide" });
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
         res.json({ token, userId: user.id, role: user.role, name: user.name });
-    } catch (err) {
-        console.error("Eroare la autentificare:", err);
-        res.status(500).json({ error: "Eroare internă la server." });
-    }
+    });
 });
 
-// Ruta pentru crearea utilizatorilor în bulk (CSV)
-const upload = multer({ dest: "uploads/" });
+// Ruta pentru adăugare utilizatori (Admin)
+app.post("/admin/users", adminOnly, (req, res) => {
+    const { name, email, phone, password, role } = req.body;
 
-app.post("/admin/bulk-users", adminOnly, upload.single("file"), async (req, res) => {
-    const filePath = req.file.path;
+    if (!name || !email || !phone || !password) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
 
-    try {
-        const data = fs.readFileSync(filePath, "utf8");
-        const lines = data.split("\n");
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const query = `INSERT INTO users (name, email, phone, password, role) VALUES (?, ?, ?, ?, ?)`;
 
-        for (const line of lines) {
-            const [name, id, password, email, phone] = line.split(",");
-            if (!name || !id || !password || !email || !phone) continue;
+    db.run(query, [name, email, phone, hashedPassword, role || "courier"], function (err) {
+        if (err) {
+            return res.status(500).json({ error: `Failed to add user: ${err.message}` });
+        }
+        res.status(201).json({ message: "User added successfully", userId: this.lastID });
+    });
+});
 
-            const hashedPassword = bcrypt.hashSync(password.trim(), 10);
+// Ruta pentru introducerea rutelor
+app.post("/route", (req, res) => {
+    const { userId, name, date, auto, tour, kunde, start, ende } = req.body;
 
-            const query = `
-                INSERT INTO users (name, id, password, email, phone, role)
-                VALUES ($1, $2, $3, $4, $5, 'courier')
-            `;
-            await db.query(query, [name.trim(), id.trim(), hashedPassword, email.trim(), phone.trim()]);
+    if (!userId || !name || !date || !auto || !tour || !kunde || !start || !ende) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const query = `INSERT INTO routes (userId, name, date, auto, tour, kunde, start, ende, totalTourMontliche) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`;
+    db.run(query, [userId, name, date, auto, tour, kunde, start, ende], function (err) {
+        if (err) {
+            return res.status(500).json({ error: `Failed to save route: ${err.message}` });
+        }
+        res.status(201).json({ message: "Route saved successfully", routeId: this.lastID });
+    });
+});
+
+// Ruta pentru export Excel (Admin)
+app.get("/admin/export", adminOnly, async (req, res) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Routes");
+
+    worksheet.columns = [
+        { header: "User ID", key: "userId", width: 10 },
+        { header: "Name", key: "name", width: 20 },
+        { header: "Date", key: "date", width: 15 },
+        { header: "Auto", key: "auto", width: 10 },
+        { header: "Tour", key: "tour", width: 10 },
+        { header: "Kunde", key: "kunde", width: 10 },
+        { header: "Start", key: "start", width: 10 },
+        { header: "Ende", key: "ende", width: 10 },
+    ];
+
+    db.all("SELECT * FROM routes", [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
         }
 
-        res.status(200).json({ message: "Utilizatorii au fost creați cu succes!" });
-    } catch (error) {
-        console.error("Eroare la procesarea fișierului CSV:", error);
-        res.status(500).json({ error: "Eroare la procesarea fișierului CSV" });
-    } finally {
-        fs.unlinkSync(filePath);
-    }
+        rows.forEach((row) => worksheet.addRow(row));
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=routes.xlsx");
+        return workbook.xlsx.write(res).then(() => res.status(200).end());
+    });
 });
 
+// Servirea fișierelor statice
+app.use(express.static(path.join(__dirname, "public")));
+
 // Pornirea serverului
-app.listen(PORT, () => console.log(`Serverul rulează pe portul ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
