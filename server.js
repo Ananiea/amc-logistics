@@ -7,6 +7,52 @@ const ExcelJS = require("exceljs");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
+// Servirea fișierelor HTML
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/dashboard", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+app.get("/admin-create-user", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "admin-create-user.html"));
+});
+
+app.get("/info", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "info.html"));
+});
+
+app.get("/introducere-ruta", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "introducere-ruta.html"));
+});
+
+app.get("/istoric-rute", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "istoric-rute.html"));
+});
+
+app.get("/mediu-invatare", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "mediu-invatare.html"));
+});
+
+app.get("/plan", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "plan.html"));
+});
+
+app.get("/profile", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "profile.html"));
+});
+
+app.get("/schimba-parola", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "schimba-parola.html"));
+});
+
+// Pagina principală (root)
+app.get("/", (req, res) => {
+    res.redirect("/login");
+});
+
 // Configurare server
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,11 +113,6 @@ function adminOnly(req, res, next) {
         return res.status(401).json({ error: "Invalid token" });
     }
 }
-
-// Ruta principală
-app.get("/", (req, res) => {
-    res.status(200).send("AMC Logistics API is running with SQLite!");
-});
 
 // Ruta de login
 app.post("/login", (req, res) => {
