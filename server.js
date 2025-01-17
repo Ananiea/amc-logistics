@@ -11,7 +11,7 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// PostgreSQL Configuration
+// Configurare PostgreSQL
 const db = new Pool({
     host: process.env.PG_HOST || "localhost",
     user: process.env.PG_USER || "amc_user",
@@ -21,7 +21,7 @@ const db = new Pool({
     ssl: { rejectUnauthorized: false },
 });
 
-// Test PostgreSQL Connection
+// Testare conexiune PostgreSQL
 db.connect()
     .then(() => console.log("Conectat la baza de date PostgreSQL!"))
     .catch((err) => {
@@ -66,22 +66,26 @@ app.post("/login", async (req, res) => {
     }
 
     const query = "SELECT * FROM users WHERE id = $1";
-    const { rows } = await db.query(query, [userId]);
+    try {
+        const { rows } = await db.query(query, [userId]);
+        if (rows.length === 0) {
+            return res.status(401).json({ error: "Informații de autentificare invalide" });
+        }
 
-    if (rows.length === 0) {
-        return res.status(401).json({ error: "Informații de autentificare invalide" });
+        const user = rows[0];
+        if (!bcrypt.compareSync(password, user.password)) {
+            return res.status(401).json({ error: "Informații de autentificare invalide" });
+        }
+
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        res.json({ token, userId: user.id, role: user.role, name: user.name });
+    } catch (err) {
+        console.error("Eroare la autentificare:", err);
+        res.status(500).json({ error: "Eroare internă la server." });
     }
-
-    const user = rows[0];
-    if (!bcrypt.compareSync(password, user.password)) {
-        return res.status(401).json({ error: "Informații de autentificare invalide" });
-    }
-
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.json({ token, userId: user.id, role: user.role, name: user.name });
 });
 
-// Ruta pentru crearea de utilizatori în bulk (CSV)
+// Ruta pentru crearea utilizatorilor în bulk (CSV)
 const upload = multer({ dest: "uploads/" });
 
 app.post("/admin/bulk-users", adminOnly, upload.single("file"), async (req, res) => {
@@ -93,6 +97,8 @@ app.post("/admin/bulk-users", adminOnly, upload.single("file"), async (req, res)
 
         for (const line of lines) {
             const [name, id, password, email, phone] = line.split(",");
+            if (!name || !id || !password || !email || !phone) continue;
+
             const hashedPassword = bcrypt.hashSync(password.trim(), 10);
 
             const query = `
