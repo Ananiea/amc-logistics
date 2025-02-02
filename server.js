@@ -31,24 +31,28 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Middleware pentru autentificare
 function authenticateToken(req, res, next) {
-    const token = req.headers.authorization?.split(" ")[1] || req.query.token;
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-        return res.redirect("/login");
+        return res.status(401).json({ error: "Unauthorized: No token provided" });
     }
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     } catch (err) {
-        return res.redirect("/login");
+        return res.status(401).json({ error: "Invalid token" });
     }
 }
 
-app.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "login.html"));
-});
+// Middleware pentru protecția adminilor
+function adminOnly(req, res, next) {
+    if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Access forbidden: Admins only" });
+    }
+    next();
+}
 
-// Lista paginilor protejate
+// Servirea fișierelor HTML protejate
 const protectedPages = [
     "dashboard",
     "admin-create-user",
@@ -61,11 +65,15 @@ const protectedPages = [
     "schimba-parola"
 ];
 
-// Protejăm paginile
 protectedPages.forEach((page) => {
     app.get(`/${page}`, authenticateToken, (req, res) => {
         res.sendFile(path.join(__dirname, "public", `${page}.html`));
     });
+});
+
+// Servirea fișierului login.html
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
 // Pagina principală (root)
@@ -99,6 +107,54 @@ app.post("/login", async (req, res) => {
         res.json({ token, userId: user.id, role: user.role, name: user.name });
     } catch (err) {
         res.status(500).json({ error: `Database error: ${err.message}` });
+    }
+});
+
+// Crearea unui utilizator (doar adminii pot face asta)
+app.post("/admin/create-user", authenticateToken, adminOnly, async (req, res) => {
+    const { name, phone, password } = req.body;
+    if (!name || !phone || !password) {
+        return res.status(400).json({ error: "Toate câmpurile sunt necesare" });
+    }
+
+    try {
+        const hashedPassword = bcrypt.hashSync(password, 10);
+        const result = await pool.query(
+            "INSERT INTO users (name, email, phone, password, role) VALUES ($1, $2, $3, $4, 'courier') RETURNING id",
+            [name, `${phone}@example.com`, phone, hashedPassword]
+        );
+
+        res.json({ message: "Utilizator creat cu succes", userId: result.rows[0].id });
+    } catch (err) {
+        res.status(500).json({ error: `Database error: ${err.message}` });
+    }
+});
+
+// Descărcarea Excel-ului cu turele (doar admin)
+app.get("/admin/export", authenticateToken, adminOnly, async (req, res) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Routes");
+
+    worksheet.columns = [
+        { header: "User ID", key: "userId", width: 10 },
+        { header: "Name", key: "name", width: 20 },
+        { header: "Date", key: "date", width: 15 },
+        { header: "Auto", key: "auto", width: 10 },
+        { header: "Tour", key: "tour", width: 10 },
+        { header: "Kunde", key: "kunde", width: 10 },
+        { header: "Start", key: "start", width: 10 },
+        { header: "Ende", key: "ende", width: 10 },
+    ];
+
+    try {
+        const result = await pool.query("SELECT * FROM routes");
+        worksheet.addRows(result.rows);
+
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=routes.xlsx");
+        return workbook.xlsx.write(res).then(() => res.status(200).end());
+    } catch (err) {
+        res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
     }
 });
 
