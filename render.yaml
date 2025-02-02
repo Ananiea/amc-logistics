@@ -1,0 +1,38 @@
+# Exported from Render on 2025-02-02T18:18:48Z
+services:
+- type: web
+  name: pgAdmin-dpg-cuehr9rv2p9s73fk3ucg-a
+  runtime: docker
+  repo: https://github.com/render-examples/pgadmin
+  plan: starter
+  envVars:
+  - key: servers.json
+    sync: false
+  - key: pgpassfile
+    sync: false
+  - key: PORT
+    sync: false
+  - key: PGADMIN_SERVER_JSON_FILE
+    sync: false
+  - key: PGADMIN_LISTEN_PORT
+    sync: false
+  - key: PGADMIN_DEFAULT_PASSWORD
+    sync: false
+  - key: PGADMIN_DEFAULT_EMAIL
+    sync: false
+  - key: PGADMIN_DATABASE_USER
+    sync: false
+  - key: PGADMIN_DATABASE_NAME
+    sync: false
+  - key: PGADMIN_DATABASE_HOST
+    sync: false
+  - key: GUNICORN_THREADS
+    sync: false
+  region: frankfurt
+  dockerContext: .
+  dockerfilePath: ./Dockerfile
+  disk:
+    name: pgadmin
+    mountPath: /var/lib/pgadmin
+    sizeGB: 1
+version: "1"
