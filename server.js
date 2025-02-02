@@ -85,7 +85,10 @@ app.get("/", (req, res) => {
 app.post("/login", async (req, res) => {
     const { userId, password } = req.body;
 
+    console.log("🔵 Login request received. userId:", userId);
+
     if (!userId || !password) {
+        console.log("🔴 User ID sau parola lipsesc.");
         return res.status(400).json({ error: "User ID și parola sunt necesare" });
     }
 
@@ -93,19 +96,24 @@ app.post("/login", async (req, res) => {
         const result = await pool.query("SELECT * FROM users WHERE id = $1", [userId]);
 
         if (result.rows.length === 0) {
+            console.log("🔴 ID invalid:", userId);
             return res.status(401).json({ error: "ID invalid sau parola greșită" });
         }
 
         const user = result.rows[0];
+        console.log("🟢 Utilizator găsit:", user);
 
         if (!bcrypt.compareSync(password, user.password)) {
+            console.log("🔴 Parola incorectă pentru ID:", userId);
             return res.status(401).json({ error: "ID invalid sau parola greșită" });
         }
 
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
+        console.log("✅ Autentificare reușită pentru:", user.name);
         res.json({ token, userId: user.id, role: user.role, name: user.name });
     } catch (err) {
+        console.log("🔴 Eroare la interogarea bazei de date:", err.message);
         res.status(500).json({ error: `Database error: ${err.message}` });
     }
 });
