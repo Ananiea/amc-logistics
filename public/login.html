@@ -1,35 +1,119 @@
-<script>
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-    
-        const userId = document.getElementById("userId").value.trim();
-        const password = document.getElementById("password").value.trim();
-    
-        if (!userId || !password) {
-            alert("Vă rugăm să introduceți ID-ul și parola.");
-            return;
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ed7f10; /* Culoare principală */
         }
+
+        body {
+            background-color: #f9f9f9;
+        }
+
+        main.container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 2rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        h1 {
+            color: #000; /* Titlul scris cu negru */
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: calc(100% - 2rem);
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        #errorMessage {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>LOGIN</h1>
+        <form id="loginForm">
+            <label for="userId">Benutzer-ID (ID Utilizator):</label>
+            <input type="text" id="userId" name="userId" placeholder="Introduceți ID-ul" required>
+        
+            <label for="password">Passwort (Parolă):</label>
+            <input type="password" id="password" name="password" placeholder="Introduceți parola" required>
+        
+            <button type="submit">Einloggen (Conectare)</button>
+        </form>
+        <p id="errorMessage"></p>
+    </main>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
     
-        try {
-            const response = await fetch("/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, password }),
-            });
+            const userId = document.getElementById("userId").value.trim();
+            const password = document.getElementById("password").value.trim();
     
-            const data = await response.json();
-            if (response.ok) {
-                localStorage.setItem("token", data.token);
-                localStorage.setItem("role", data.role);
-                localStorage.setItem("userId", data.userId);
-                localStorage.setItem("name", data.name);
-    
-                window.location.href = "/dashboard";
-            } else {
-                document.getElementById("errorMessage").innerText = data.error || "Eroare la conectare.";
+            if (!userId || !password) {
+                alert("Vă rugăm să introduceți ID-ul și parola.");
+                return;
             }
-        } catch (error) {
-            document.getElementById("errorMessage").innerText = "Eroare de rețea.";
-        }
-    });
-</script>
+    
+            try {
+                const response = await fetch("/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId, password }),
+                });
+    
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("role", data.role);
+                    localStorage.setItem("userId", data.userId);
+                    localStorage.setItem("name", data.name);
+    
+                    window.location.href = "/dashboard";
+                } else {
+                    document.getElementById("errorMessage").innerText = data.error || "Eroare la conectare.";
+                }
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Eroare de rețea.";
+            }
+        });
+    </script>    
+</body>
+</html>
