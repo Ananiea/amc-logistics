@@ -86,9 +86,9 @@ app.post("/login", async (req, res) => {
     const { userId, password } = req.body;
 
     console.log("🔵 Login request received. userId:", userId);
-
+    
     if (!userId || !password) {
-        console.log("🔴 User ID sau parola lipsesc.");
+        console.log("🔴 Eroare: ID sau parola lipsă.");
         return res.status(400).json({ error: "User ID și parola sunt necesare" });
     }
 
@@ -96,15 +96,18 @@ app.post("/login", async (req, res) => {
         const result = await pool.query("SELECT * FROM users WHERE id = $1", [userId]);
 
         if (result.rows.length === 0) {
-            console.log("🔴 ID invalid:", userId);
+            console.log("🔴 Eroare: Utilizatorul NU există în baza de date.");
             return res.status(401).json({ error: "ID invalid sau parola greșită" });
         }
 
         const user = result.rows[0];
         console.log("🟢 Utilizator găsit:", user);
 
+        console.log("🔍 Parola introdusă:", password);
+        console.log("🔍 Parola criptată în BD:", user.password);
+
         if (!bcrypt.compareSync(password, user.password)) {
-            console.log("🔴 Parola incorectă pentru ID:", userId);
+            console.log("🔴 Eroare: Parola nu se potrivește!");
             return res.status(401).json({ error: "ID invalid sau parola greșită" });
         }
 
@@ -117,6 +120,7 @@ app.post("/login", async (req, res) => {
         res.status(500).json({ error: `Database error: ${err.message}` });
     }
 });
+
 
 // Crearea unui utilizator (doar adminii pot face asta)
 app.post("/admin/create-user", authenticateToken, adminOnly, async (req, res) => {
@@ -163,6 +167,14 @@ app.get("/admin/export", authenticateToken, adminOnly, async (req, res) => {
         return workbook.xlsx.write(res).then(() => res.status(200).end());
     } catch (err) {
         res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
+    }
+});
+
+pool.query("SELECT NOW()", (err, result) => {
+    if (err) {
+        console.error("🔴 EROARE: Nu mă pot conecta la PostgreSQL:", err.message);
+    } else {
+        console.log("🟢 Conexiunea la PostgreSQL este activă. Ora serverului:", result.rows[0].now);
     }
 });
 
