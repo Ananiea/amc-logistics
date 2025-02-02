@@ -71,30 +71,39 @@
         p#errorMessage {
             color: red;
         }
+
+        .logout-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
-    <main class="container">
-        <h1>Passwort ändern (Schimbă parola)</h1>
-        <form id="changePasswordForm">
-            <label for="newPassword">Neues Passwort (Parola nouă):</label>
-            <input type="password" id="newPassword" name="newPassword" required>
-            <label for="confirmPassword">Passwort bestätigen (Confirmare parolă):</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" required>
-            <button type="submit">Speichern (Salvează)</button>
-        </form>
-        <p id="successMessage"></p>
-        <p id="errorMessage"></p>
-    </main>
+
     <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+
         document.getElementById("changePasswordForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             const newPassword = document.getElementById("newPassword").value;
             const confirmPassword = document.getElementById("confirmPassword").value;
+            
             if (newPassword !== confirmPassword) {
                 document.getElementById("errorMessage").innerText = "Passwörter stimmen nicht überein! (Parolele nu coincid!)";
                 return;
             }
+
             const userId = localStorage.getItem("userId");
             try {
                 const response = await fetch("/user/password", {
@@ -105,6 +114,7 @@
                     },
                     body: JSON.stringify({ userId, newPassword })
                 });
+
                 const data = await response.json();
                 if (response.ok) {
                     document.getElementById("successMessage").innerText = "Passwort erfolgreich geändert! (Parola a fost schimbată cu succes!)";
@@ -116,5 +126,25 @@
             }
         });
     </script>
+
+    <main class="container">
+        <h1>Passwort ändern (Schimbă parola)</h1>
+        <form id="changePasswordForm">
+            <label for="newPassword">Neues Passwort (Parola nouă):</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+            
+            <label for="confirmPassword">Passwort bestätigen (Confirmare parolă):</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+            
+            <button type="submit">Speichern (Salvează)</button>
+        </form>
+        <p id="successMessage"></p>
+        <p id="errorMessage"></p>
+
+        <div class="logout-container">
+            <button onclick="logout()">Abmelden (Deconectare)</button>
+        </div>
+    </main>
+
 </body>
 </html>

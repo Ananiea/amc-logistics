@@ -71,33 +71,31 @@
         p#errorMessage {
             color: red;
         }
+
+        .logout-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
-    <main class="container">
-        <h1>Profil (Profil Curier)</h1>
-        <form id="profileForm">
-            <label for="name">Name (Nume):</label>
-            <input type="text" id="name" readonly>
 
-            <label for="id">ID:</label>
-            <input type="text" id="id" readonly>
-
-            <label for="birthDate">Geburtsdatum (Data de naștere):</label>
-            <input type="date" id="birthDate">
-
-            <label for="email">E-Mail (Email):</label>
-            <input type="email" id="email">
-
-            <label for="phone">Telefonnummer (Telefon):</label>
-            <input type="tel" id="phone">
-
-            <button type="submit">Speichern (Salvează)</button>
-        </form>
-        <p id="successMessage"></p>
-        <p id="errorMessage"></p>
-    </main>
     <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+
+            fetchProfile();
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+
         async function fetchProfile() {
             try {
                 const response = await fetch(`/user/${localStorage.getItem("userId")}`, {
@@ -109,8 +107,8 @@
                     document.getElementById("name").value = data.name;
                     document.getElementById("id").value = data.id;
                     document.getElementById("birthDate").value = data.birthDate || "";
-                    document.getElementById("email").value = data.email;
-                    document.getElementById("phone").value = data.phone;
+                    document.getElementById("email").value = data.email || "";
+                    document.getElementById("phone").value = data.phone || "";
                 } else {
                     document.getElementById("errorMessage").innerText = "Fehler beim Laden des Profils (Eroare la încărcarea profilului).";
                 }
@@ -148,8 +146,35 @@
                 document.getElementById("errorMessage").innerText = "Fehler beim Aktualisieren des Profils (Eroare la actualizarea profilului).";
             }
         });
-
-        fetchProfile();
     </script>
+
+    <main class="container">
+        <h1>Profil (Profil Curier)</h1>
+        <form id="profileForm">
+            <label for="name">Name (Nume):</label>
+            <input type="text" id="name" readonly>
+
+            <label for="id">ID:</label>
+            <input type="text" id="id" readonly>
+
+            <label for="birthDate">Geburtsdatum (Data de naștere):</label>
+            <input type="date" id="birthDate">
+
+            <label for="email">E-Mail (Email):</label>
+            <input type="email" id="email">
+
+            <label for="phone">Telefonnummer (Telefon):</label>
+            <input type="tel" id="phone">
+
+            <button type="submit">Speichern (Salvează)</button>
+        </form>
+        <p id="successMessage"></p>
+        <p id="errorMessage"></p>
+
+        <div class="logout-container">
+            <button onclick="logout()">Abmelden (Deconectare)</button>
+        </div>
+    </main>
+
 </body>
 </html>

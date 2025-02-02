@@ -48,6 +48,28 @@
     </style>
 </head>
 <body>
+
+    <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+
+            // Verifică rolul utilizatorului pentru a afișa butonul admin
+            const role = localStorage.getItem("role");
+            if (role === "admin") {
+                document.getElementById("adminButton").style.display = "block";
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+    </script>
+
     <h1>Dashboard - AM Logistics</h1>
     <main class="container">
         <button onclick="location.href='/introducere-ruta'">Tägliche Route einfügen (Introducere rută zilnică)</button>
@@ -60,18 +82,6 @@
         <button id="adminButton" style="display:none;" onclick="location.href='/admin-create-user'">Benutzer hinzufügen (Adaugă utilizator)</button>
         <button onclick="logout()">Abmelden (Deconectare)</button>
     </main>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const role = localStorage.getItem("role");
-            if (role === "admin") {
-                document.getElementById("adminButton").style.display = "block";
-            }
-        });
 
-        function logout() {
-            localStorage.clear();
-            window.location.href = "/login";
-        }
-    </script>
 </body>
 </html>

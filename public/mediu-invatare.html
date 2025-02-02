@@ -84,17 +84,78 @@
         #adminSection {
             display: none; /* Ascuns pentru utilizatori non-admin */
         }
+
+        .logout-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
+
+    <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+
+            // Verifică rolul utilizatorului pentru a afișa secțiunea de administrare
+            const role = localStorage.getItem("role");
+            if (role === "admin") {
+                document.getElementById("adminSection").style.display = "block";
+            }
+
+            // Încarcă resursele disponibile
+            loadResources();
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+
+        function loadResources() {
+            const resourceList = document.getElementById("resourceList");
+
+            // Simulare date existente
+            const resources = [
+                { title: "YouTube Video: Beispiel", link: "https://www.youtube.com/watch?v=example" },
+                { title: "Arbeitsplan PDF", link: "https://example.com/plan.pdf" }
+            ];
+
+            resources.forEach(resource => {
+                const li = document.createElement("li");
+                li.innerHTML = `<a href="${resource.link}" target="_blank">${resource.title}</a>`;
+                resourceList.appendChild(li);
+            });
+        }
+
+        document.getElementById("adminForm")?.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const title = document.getElementById("title").value;
+            const link = document.getElementById("link").value;
+            const resourceList = document.getElementById("resourceList");
+
+            const li = document.createElement("li");
+            li.innerHTML = `<a href="${link}" target="_blank">${title}</a>`;
+            resourceList.appendChild(li);
+
+            document.getElementById("adminForm").reset();
+        });
+    </script>
+
     <main class="container">
         <h1>Lernumgebung (Mediu de învățare)</h1>
+
         <section id="resources">
             <h2>Verfügbare Ressourcen (Resurse disponibile)</h2>
             <ul class="resource-list" id="resourceList">
                 <!-- Resursele vor fi generate din JavaScript -->
             </ul>
         </section>
+
         <section id="adminSection">
             <h2>Neue Ressourcen hinzufügen (Adaugă resurse noi)</h2>
             <form id="adminForm">
@@ -105,45 +166,11 @@
                 <button type="submit">Hinzufügen (Adaugă)</button>
             </form>
         </section>
+
+        <div class="logout-container">
+            <button onclick="logout()">Abmelden (Deconectare)</button>
+        </div>
     </main>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const role = localStorage.getItem("role");
-            const resourceList = document.getElementById("resourceList");
 
-            // Simulare date existente
-            const resources = [
-                { title: "YouTube Video: Beispiel", link: "https://www.youtube.com/watch?v=example" },
-                { title: "Arbeitsplan PDF", link: "https://example.com/plan.pdf" }
-            ];
-
-            // Afișare resurse existente
-            resources.forEach(resource => {
-                const li = document.createElement("li");
-                li.innerHTML = `<a href="${resource.link}" target="_blank">${resource.title}</a>`;
-                resourceList.appendChild(li);
-            });
-
-            // Afișare secțiune admin dacă utilizatorul este admin
-            if (role === "admin") {
-                document.getElementById("adminSection").style.display = "block";
-
-                // Gestionare formular pentru resurse noi
-                document.getElementById("adminForm").addEventListener("submit", (e) => {
-                    e.preventDefault();
-                    const title = document.getElementById("title").value;
-                    const link = document.getElementById("link").value;
-
-                    // Adaugă resursa în listă
-                    const li = document.createElement("li");
-                    li.innerHTML = `<a href="${link}" target="_blank">${title}</a>`;
-                    resourceList.appendChild(li);
-
-                    // Resetează formularul
-                    document.getElementById("adminForm").reset();
-                });
-            }
-        });
-    </script>
 </body>
 </html>

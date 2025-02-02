@@ -72,9 +72,92 @@
         button:hover {
             background-color: #d9730c;
         }
+
+        .logout-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
+
+    <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+
+            // Verifică rolul utilizatorului pentru a afișa secțiunea admin
+            const role = localStorage.getItem("role");
+            if (role === "admin") {
+                document.getElementById("adminSection").style.display = "block";
+            }
+
+            // Încarcă planurile disponibile
+            loadPlans();
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+
+        function loadPlans() {
+            const planList = document.getElementById("planList");
+
+            // Simulare planuri existente
+            const plans = [
+                { title: "Plan für Montag (Plan pentru Luni)", link: "https://example.com/monday-plan.jpg" },
+                { title: "Plan für Dienstag (Plan pentru Marți)", link: "https://example.com/tuesday-plan.jpg" }
+            ];
+
+            plans.forEach(plan => {
+                const li = document.createElement("li");
+                li.innerHTML = `<a href="${plan.link}" target="_blank">${plan.title}</a>`;
+                planList.appendChild(li);
+            });
+        }
+
+        document.getElementById("adminForm")?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const title = document.getElementById("title").value;
+            const fileInput = document.getElementById("file");
+            const file = fileInput.files[0];
+            const planList = document.getElementById("planList");
+
+            // Încărcare fișier către server
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/upload-plan", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    // Adaugă planul în listă
+                    const li = document.createElement("li");
+                    li.innerHTML = `<a href="${data.link}" target="_blank">${data.title}</a>`;
+                    planList.appendChild(li);
+
+                    // Resetează formularul
+                    document.getElementById("adminForm").reset();
+                } else {
+                    alert(`Fehler: ${data.error}`);
+                }
+            } catch (error) {
+                alert("Fehler beim Hochladen (Eroare la încărcare)");
+            }
+        });
+    </script>
+
     <main class="container">
         <h1>Plan (Plan de lucru)</h1>
         <section id="planSection">
@@ -93,67 +176,11 @@
                 <button type="submit">Hinzufügen (Adaugă)</button>
             </form>
         </section>
+
+        <div class="logout-container">
+            <button onclick="logout()">Abmelden (Deconectare)</button>
+        </div>
     </main>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const role = localStorage.getItem("role");
-            const planList = document.getElementById("planList");
 
-            // Simulare planuri existente
-            const plans = [
-                { title: "Plan für Montag (Plan pentru Luni)", link: "https://example.com/monday-plan.jpg" },
-                { title: "Plan für Dienstag (Plan pentru Marți)", link: "https://example.com/tuesday-plan.jpg" }
-            ];
-
-            // Afișare planuri
-            plans.forEach(plan => {
-                const li = document.createElement("li");
-                li.innerHTML = `<a href="${plan.link}" target="_blank">${plan.title}</a>`;
-                planList.appendChild(li);
-            });
-
-            // Afișare secțiune admin pentru utilizatori cu rolul "admin"
-            if (role === "admin") {
-                document.getElementById("adminSection").style.display = "block";
-
-                // Gestionare formular pentru planuri noi
-                document.getElementById("adminForm").addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    const title = document.getElementById("title").value;
-                    const fileInput = document.getElementById("file");
-                    const file = fileInput.files[0];
-
-                    // Încărcare fișier către server
-                    const formData = new FormData();
-                    formData.append("title", title);
-                    formData.append("file", file);
-
-                    try {
-                        const response = await fetch("/upload-plan", {
-                            method: "POST",
-                            headers: {
-                                Authorization: `Bearer ${localStorage.getItem("token")}`
-                            },
-                            body: formData
-                        });
-                        const data = await response.json();
-                        if (response.ok) {
-                            // Adaugă planul în listă
-                            const li = document.createElement("li");
-                            li.innerHTML = `<a href="${data.link}" target="_blank">${data.title}</a>`;
-                            planList.appendChild(li);
-
-                            // Resetează formularul
-                            document.getElementById("adminForm").reset();
-                        } else {
-                            alert(`Fehler: ${data.error}`);
-                        }
-                    } catch (error) {
-                        alert("Fehler beim Hochladen (Eroare la încărcare)");
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>

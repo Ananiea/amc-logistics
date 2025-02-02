@@ -87,9 +87,30 @@
             color: red;
             text-align: center;
         }
+
+        .logout-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
+
+    <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+    </script>
+
     <main class="container">
         <h1>Routenhistorie (Istoric rute)</h1>
         <label for="month">Monat wählen (Selectează luna):</label>
@@ -123,7 +144,11 @@
             </tbody>
         </table>
         <p id="errorMessage"></p>
+        <div class="logout-container">
+            <button onclick="logout()">Abmelden (Deconectare)</button>
+        </div>
     </main>
+
     <script>
         async function fetchRoutes() {
             const month = document.getElementById("month").value;
@@ -159,5 +184,6 @@
             }
         }
     </script>
+
 </body>
 </html>

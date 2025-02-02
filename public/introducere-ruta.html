@@ -67,9 +67,34 @@
         p {
             text-align: center;
         }
+
+        .logout-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
+
+    <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+
+            // Completare automată a numelui și ID-ului
+            document.getElementById("name").value = localStorage.getItem("name") || "";
+            document.getElementById("userId").value = localStorage.getItem("userId") || "";
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+    </script>
+
     <main class="container">
         <h1>Tägliche Route einfügen (Introducere rută zilnică)</h1>
         <form id="routeForm">
@@ -93,47 +118,45 @@
         </form>
         <p id="successMessage" style="color:green;"></p>
         <p id="errorMessage" style="color:red;"></p>
+        <div class="logout-container">
+            <button onclick="logout()">Abmelden (Deconectare)</button>
+        </div>
     </main>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Completare automată a numelui și ID-ului
-            document.getElementById("name").value = localStorage.getItem("name");
-            document.getElementById("userId").value = localStorage.getItem("userId");
 
-            // Gestionare formular
-            document.getElementById("routeForm").addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const formData = {
-                    userId: document.getElementById("userId").value,
-                    name: document.getElementById("name").value,
-                    date: document.getElementById("date").value,
-                    auto: document.getElementById("auto").value,
-                    tour: document.getElementById("tour").value,
-                    kunde: document.getElementById("kunde").value,
-                    start: document.getElementById("start").value,
-                    ende: document.getElementById("ende").value
-                };
-                try {
-                    const response = await fetch("/route", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${localStorage.getItem("token")}`
-                        },
-                        body: JSON.stringify(formData)
-                    });
-                    const data = await response.json();
-                    if (response.ok) {
-                        document.getElementById("successMessage").innerText = "Route gespeichert! (Rută salvată!)";
-                        document.getElementById("routeForm").reset();
-                    } else {
-                        document.getElementById("errorMessage").innerText = data.error;
-                    }
-                } catch (error) {
-                    document.getElementById("errorMessage").innerText = "Fehler beim Speichern (Eroare la salvare)";
+    <script>
+        document.getElementById("routeForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = {
+                userId: document.getElementById("userId").value,
+                name: document.getElementById("name").value,
+                date: document.getElementById("date").value,
+                auto: document.getElementById("auto").value,
+                tour: document.getElementById("tour").value,
+                kunde: document.getElementById("kunde").value,
+                start: document.getElementById("start").value,
+                ende: document.getElementById("ende").value
+            };
+            try {
+                const response = await fetch("/route", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("successMessage").innerText = "Route gespeichert! (Rută salvată!)";
+                    document.getElementById("routeForm").reset();
+                } else {
+                    document.getElementById("errorMessage").innerText = data.error;
                 }
-            });
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Fehler beim Speichern (Eroare la salvare)";
+            }
         });
     </script>
+
 </body>
 </html>

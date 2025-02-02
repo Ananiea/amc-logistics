@@ -70,9 +70,45 @@
         a:hover {
             text-decoration: underline;
         }
+
+        button {
+            background-color: var(--primary-color);
+            color: #fff;
+            font-size: 1rem;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #d9730c;
+        }
+
+        .logout-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
+
+    <script>
+        // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/login";
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+    </script>
+
     <main class="container">
         <h1>Informationen (Informații)</h1>
         <section>
@@ -108,6 +144,10 @@
                 </a>
             </p>
         </section>
+        <div class="logout-container">
+            <button onclick="logout()">Abmelden (Deconectare)</button>
+        </div>
     </main>
+
 </body>
 </html>
