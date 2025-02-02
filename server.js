@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const ExcelJS = require("exceljs");
@@ -81,7 +80,7 @@ app.get("/", (req, res) => {
     res.redirect("/login");
 });
 
-// Login pe bază de ID și parolă
+// Login pe bază de ID și parolă (fără criptare)
 app.post("/login", async (req, res) => {
     const { userId, password } = req.body;
 
@@ -104,9 +103,9 @@ app.post("/login", async (req, res) => {
         console.log("🟢 Utilizator găsit:", user);
 
         console.log("🔍 Parola introdusă:", password);
-        console.log("🔍 Parola criptată în BD:", user.password);
+        console.log("🔍 Parola salvată în BD:", user.password);
 
-        if (!bcrypt.compareSync(password, user.password)) {
+        if (password !== user.password) {
             console.log("🔴 Eroare: Parola nu se potrivește!");
             return res.status(401).json({ error: "ID invalid sau parola greșită" });
         }
@@ -121,7 +120,6 @@ app.post("/login", async (req, res) => {
     }
 });
 
-
 // Crearea unui utilizator (doar adminii pot face asta)
 app.post("/admin/create-user", authenticateToken, adminOnly, async (req, res) => {
     const { name, phone, password } = req.body;
@@ -130,10 +128,9 @@ app.post("/admin/create-user", authenticateToken, adminOnly, async (req, res) =>
     }
 
     try {
-        const hashedPassword = bcrypt.hashSync(password, 10);
         const result = await pool.query(
             "INSERT INTO users (name, email, phone, password, role) VALUES ($1, $2, $3, $4, 'courier') RETURNING id",
-            [name, `${phone}@example.com`, phone, hashedPassword]
+            [name, `${phone}@example.com`, phone, password]
         );
 
         res.json({ message: "Utilizator creat cu succes", userId: result.rows[0].id });
