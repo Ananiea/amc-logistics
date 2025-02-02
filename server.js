@@ -112,7 +112,8 @@ app.post("/login", async (req, res) => {
 
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-        console.log("✅ Autentificare reușită pentru:", user.name);
+        console.log("✅ Token JWT generat:", token);
+
         res.json({ token, userId: user.id, role: user.role, name: user.name });
     } catch (err) {
         console.log("🔴 Eroare la interogarea bazei de date:", err.message);
