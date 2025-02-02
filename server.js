@@ -4,47 +4,24 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const ExcelJS = require("exceljs");
-const sqlite3 = require("sqlite3").verbose();
+const { Pool } = require("pg");
 const path = require("path");
 
 // Configurare server
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configurare baza de date SQLite
-const db = new sqlite3.Database(path.join(__dirname, "amc-logistics.db"), (err) => {
-    if (err) {
-        console.error("Error connecting to SQLite database:", err.message);
-    } else {
-        console.log("Connected to SQLite database.");
+// Conectare la PostgreSQL
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false // Necesită pentru conexiuni sigure pe Render
     }
 });
 
-// Creare tabele dacă nu există
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        phone TEXT NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT DEFAULT 'courier'
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS routes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        date TEXT NOT NULL,
-        auto TEXT NOT NULL,
-        tour INTEGER NOT NULL,
-        kunde INTEGER NOT NULL,
-        start TEXT NOT NULL,
-        ende TEXT NOT NULL,
-        totalTourMontliche INTEGER DEFAULT 0,
-        FOREIGN KEY (userId) REFERENCES users (id)
-    )`);
-});
+pool.connect()
+    .then(() => console.log("Connected to PostgreSQL"))
+    .catch(err => console.error("Database connection error:", err));
 
 // Middleware
 app.use(cors());
@@ -96,26 +73,63 @@ function adminOnly(req, res, next) {
 }
 
 // Ruta de login
-app.post("/login", (req, res) => {
-    const { userId, password } = req.body;
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
 
-    if (!userId || !password) {
-        return res.status(400).json({ error: "User ID and password are required" });
+    if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const query = `SELECT * FROM users WHERE id = ?`;
-    db.get(query, [userId], (err, user) => {
-        if (err || !user) {
+    try {
+        const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+
+        if (result.rows.length === 0) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
+
+        const user = result.rows[0];
 
         if (!bcrypt.compareSync(password, user.password)) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
 
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
         res.json({ token, userId: user.id, role: user.role, name: user.name });
-    });
+    } catch (err) {
+        res.status(500).json({ error: `Database error: ${err.message}` });
+    }
+});
+
+// Ruta de înregistrare utilizator
+app.post("/register", async (req, res) => {
+    const { name, email, phone, password, role } = req.body;
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const result = await pool.query(
+            "INSERT INTO users (name, email, phone, password, role) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            [name, email, phone, hashedPassword, role || "courier"]
+        );
+        res.status(201).json({ message: "User created", user: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: `Database error: ${err.message}` });
+    }
+});
+
+// Ruta pentru înregistrarea unei ture
+app.post("/routes", async (req, res) => {
+    const { userId, name, date, auto, tour, kunde, start, ende } = req.body;
+
+    try {
+        const result = await pool.query(
+            "INSERT INTO routes (userId, name, date, auto, tour, kunde, start, ende) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+            [userId, name, date, auto, tour, kunde, start, ende]
+        );
+        res.status(201).json({ message: "Route added", route: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: `Database error: ${err.message}` });
+    }
 });
 
 // Ruta pentru descărcarea Excel-ului (Admin)
@@ -134,16 +148,16 @@ app.get("/admin/export", adminOnly, async (req, res) => {
         { header: "Ende", key: "ende", width: 10 },
     ];
 
-    db.all("SELECT * FROM routes", [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
-        }
+    try {
+        const result = await pool.query("SELECT * FROM routes");
 
-        rows.forEach((row) => worksheet.addRow(row));
+        result.rows.forEach((row) => worksheet.addRow(row));
         res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.setHeader("Content-Disposition", "attachment; filename=routes.xlsx");
         return workbook.xlsx.write(res).then(() => res.status(200).end());
-    });
+    } catch (err) {
+        res.status(500).json({ error: `Failed to fetch routes: ${err.message}` });
+    }
 });
 
 // Pornirea serverului
