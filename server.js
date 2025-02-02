@@ -31,17 +31,25 @@ app.use(express.static(path.join(__dirname, "public")));
 // Middleware pentru autentificare
 function authenticateToken(req, res, next) {
     const token = req.headers.authorization?.split(" ")[1];
+
+    console.log("📡 Token primit de server:", token);
+
     if (!token) {
+        console.log("🔴 Eroare: Niciun token furnizat.");
         return res.status(401).json({ error: "Unauthorized: No token provided" });
     }
+
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("🟢 Token valid. User ID:", decoded.id, "Rol:", decoded.role);
         req.user = decoded;
         next();
     } catch (err) {
+        console.log("🔴 Eroare: Token invalid.");
         return res.status(401).json({ error: "Invalid token" });
     }
 }
+
 
 // Middleware pentru protecția adminilor
 function adminOnly(req, res, next) {

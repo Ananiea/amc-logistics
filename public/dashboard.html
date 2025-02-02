@@ -51,18 +51,39 @@
 
     <script>
         // Verifică dacă utilizatorul este logat, altfel îl redirecționează la login
-        document.addEventListener("DOMContentLoaded", () => {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                window.location.href = "/login";
-            }
+        document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        console.log("🔴 Niciun token găsit. Redirecționare către login...");
+        window.location.href = "/login";
+        return;
+    }
 
-            // Verifică rolul utilizatorului pentru a afișa butonul admin
-            const role = localStorage.getItem("role");
-            if (role === "admin") {
-                document.getElementById("adminButton").style.display = "block";
-            }
+    console.log("📡 Token găsit în localStorage:", token);
+
+    try {
+        const response = await fetch("/dashboard", {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
         });
+
+        if (!response.ok) {
+            throw new Error("Acces neautorizat.");
+        }
+
+        console.log("🟢 Acces la dashboard permis.");
+    } catch (error) {
+        console.error("🔴 Eroare la accesarea dashboard-ului:", error.message);
+        window.location.href = "/login";
+    }
+
+    // Verifică rolul utilizatorului pentru a afișa butonul admin
+    const role = localStorage.getItem("role");
+    if (role === "admin") {
+        document.getElementById("adminButton").style.display = "block";
+    }
+});
+
 
         function logout() {
             localStorage.clear();
