@@ -1,3 +1,4 @@
+/* public/login.html */
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -7,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #ed7f10; /* Culoare principală */
+            --primary-color: #ed7f10;
         }
 
         body {
@@ -25,7 +26,7 @@
         }
 
         h1 {
-            color: #000; /* Titlul scris cu negru */
+            color: #000;
         }
 
         input[type="text"],
@@ -82,47 +83,43 @@
 
     <script>
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    
-    console.log("🔵 Butonul de login a fost apăsat."); // Verificare click buton
+            e.preventDefault();
+            console.log("🔵 Butonul de login a fost apăsat.");
+            const userId = document.getElementById("userId").value.trim();
+            const password = document.getElementById("password").value.trim();
+            console.log("📤 Trimit date:", { userId, password });
 
-    const userId = document.getElementById("userId").value.trim();
-    const password = document.getElementById("password").value.trim();
+            if (!userId || !password) {
+                alert("Vă rugăm să introduceți ID-ul și parola.");
+                return;
+            }
 
-    console.log("📤 Trimit date:", { userId, password });
+            try {
+                const response = await fetch("/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId, password }),
+                });
 
-    if (!userId || !password) {
-        alert("Vă rugăm să introduceți ID-ul și parola.");
-        return;
-    }
+                const data = await response.json();
+                console.log("🟢 Răspuns server:", data);
 
-    try {
-        const response = await fetch("/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, password }),
+                if (response.ok) {
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("role", data.role);
+                    localStorage.setItem("userId", data.userId);
+                    localStorage.setItem("name", data.name);
+                    console.log("✅ Autentificare reușită! Redirecționare către dashboard...");
+                    window.location.href = "/dashboard";
+                } else {
+                    document.getElementById("errorMessage").innerText = data.error || "Eroare la conectare.";
+                    console.log("🔴 Eroare la login:", data.error);
+                }
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Eroare de rețea.";
+                console.log("🔴 Eroare rețea:", error);
+            }
         });
-
-        const data = await response.json();
-        console.log("🟢 Răspuns server:", data);
-
-        if (response.ok) {
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("role", data.role);
-            localStorage.setItem("userId", data.userId);
-            localStorage.setItem("name", data.name);
-
-            console.log("✅ Autentificare reușită! Redirecționare către dashboard...");
-            window.location.href = "/dashboard";
-        } else {
-            document.getElementById("errorMessage").innerText = data.error || "Eroare la conectare.";
-            console.log("🔴 Eroare la login:", data.error);
-        }
-    } catch (error) {
-        document.getElementById("errorMessage").innerText = "Eroare de rețea.";
-        console.log("🔴 Eroare rețea:", error);
-    }
-});
     </script>    
 </body>
 </html>
