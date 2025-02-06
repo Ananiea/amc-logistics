@@ -52,6 +52,10 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => res.redirect("/login"));
 
 // Secure login route (using userId instead of email)
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
 app.post("/login", async (req, res) => {
     const { userId, password } = req.body;
     if (!userId || !password) return res.status(400).json({ error: "UserID and password are required" });
